@@ -26,7 +26,7 @@ env:
 
 jobs:
   build_artifacts:
-    name: Build / compilacion de artefactos
+    name: Build de artefactos - ${{ matrix.service.name }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
