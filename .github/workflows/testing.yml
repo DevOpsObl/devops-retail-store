@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - testing
+  workflow_dispatch:
 
 concurrency:
   group: retail-store-testing-${{ github.ref }}
