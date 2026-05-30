@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   build_artifacts:
-    name: Build de artefactos
+    name: Build
     uses: ./.github/workflows/reusable-build-artifacts.yml
     with:
       node-version: "22"
@@ -28,22 +28,22 @@ jobs:
       python-version: "3.12"
 
   automated_tests:
-    name: Pruebas automatizadas
+    name: Test
     needs: build_artifacts
     uses: ./.github/workflows/reusable-automated-tests.yml
 
   code_quality:
-    name: Calidad de codigo
+    name: Quality
     needs: automated_tests
     uses: ./.github/workflows/reusable-code-quality.yml
 
   security_analysis:
-    name: Analisis de seguridad
+    name: Security
     needs: automated_tests
     uses: ./.github/workflows/reusable-security-analysis.yml
 
   publish_images:
-    name: Publicacion de imagenes
+    name: Publish
     if: github.event_name != 'pull_request'
     needs:
       - code_quality
