@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
@@ -36,6 +39,7 @@ jobs:
     uses: ./.github/workflows/reusable-security-analysis.yml
 
   publish_images:
+    if: github.event_name != 'pull_request'
     needs:
       - code_quality
       - security_analysis
@@ -50,6 +54,7 @@ jobs:
     name: Quality gate Test -> Prod
     runs-on: ubuntu-latest
     needs: publish_images
+    if: github.event_name != 'pull_request'
     steps:
       - name: Verify Test promotion gate
         run: |
@@ -62,6 +67,7 @@ jobs:
     name: Despliegue Prod
     runs-on: ubuntu-latest
     needs: gate_test_to_prod
+    if: github.event_name != 'pull_request'
     environment:
       name: Prod
     steps:

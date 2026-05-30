@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - develop
+  push:
+    branches:
+      - develop
   workflow_dispatch:
 
 concurrency:
@@ -36,6 +39,7 @@ jobs:
     uses: ./.github/workflows/reusable-security-analysis.yml
 
   publish_images:
+    if: github.event_name != 'pull_request'
     needs:
       - code_quality
       - security_analysis
@@ -50,6 +54,7 @@ jobs:
     name: Despliegue Dev
     runs-on: ubuntu-latest
     needs: publish_images
+    if: github.event_name != 'pull_request'
     environment:
       name: Develop
     steps:
