@@ -78,7 +78,7 @@ jobs:
       - name: Install Yarn dependencies
         if: matrix.service.type == 'node-yarn'
         working-directory: ${{ matrix.service.path }}
-        run: yarn install --immutable
+        run: yarn install
 
       - name: Build Yarn artifact
         if: matrix.service.type == 'node-yarn'
