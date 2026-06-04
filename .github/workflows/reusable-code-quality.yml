@@ -1,0 +1,18 @@
+name: Reusable - Analisis de calidad de codigo
+
+on:
+  workflow_call:
+
+jobs:
+  code_quality:
+    name: Analisis de calidad de codigo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run code quality analysis
+        run: |
+          echo "TODO: definir como se ejecutara el analisis de calidad de codigo."
+          # TODO: definir herramienta de calidad.
+          # TODO: Definir umbrales de calidad (coverage mínimo, número máximo de code smells, etc.) que actúen como quality gate.
+          # TODO: fallar el job si no se cumplen los umbrales definidos.
+          # Ejemplo posible:
+          # sonar-scanner -Dsonar.qualitygate.wait=true
