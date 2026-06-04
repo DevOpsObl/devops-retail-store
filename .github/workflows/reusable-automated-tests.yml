@@ -1,0 +1,16 @@
+name: Reusable - Ejecucion de pruebas automatizadas
+
+on:
+  workflow_call:
+
+jobs:
+  automated_tests:
+    name: Ejecucion de pruebas automatizadas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run automated tests
+        run: |
+          echo "TODO: definir como se ejecutaran las pruebas automatizadas."
+          # TODO: agregar pruebas de integracion entre microservicios.
+          # TODO: agregar pruebas de carga y rendimiento.
+          # TODO: publicar reportes de pruebas cuando se elija la herramienta.
