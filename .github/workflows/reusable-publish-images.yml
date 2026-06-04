@@ -1,0 +1,34 @@
+name: Reusable - Publicacion de imagenes de contenedor
+
+on:
+  workflow_call:
+    inputs:
+      registry:
+        required: true
+        type: string
+      image-prefix:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+
+jobs:
+  publish_images:
+    name: Publicacion de imagenes de contenedor
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ${{ inputs.registry }}
+      IMAGE_PREFIX: ${{ inputs.image-prefix }}
+      IMAGE_TAG: ${{ inputs.image-tag }}
+    steps:
+      - name: Publish container images
+        run: |
+          echo "TODO: definir como se publicaran las imagenes de contenedor."
+          # TODO: definir registry de contenedores.
+          # TODO: definir estrategia de tags para catalog, orders, checkout, ui, admin y cart.
+          # TODO: agregar login seguro al registry usando secrets.
+          # TODO: construir y publicar las imagenes una vez definida la estrategia.
+          # Ejemplo posible:
+          # docker build -t $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG ./src/<servicio>
+          # docker push $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG

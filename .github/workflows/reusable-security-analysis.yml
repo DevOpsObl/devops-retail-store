@@ -1,0 +1,21 @@
+name: Reusable - Analisis de seguridad
+
+on:
+  workflow_call:
+
+jobs:
+  security_analysis:
+    name: Analisis de seguridad
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run security analysis
+        run: |
+          echo "TODO: definir como se ejecutara el analisis de seguridad."
+          # TODO: definir herramienta de seguridad.
+          # TODO: Analizar e las dependencias de los microservicios en busca de CVEs conocidos.
+          # TODO: Definir un quality gate que bloquee el pipeline ante vulnerabilidades de severidad CRITICAL o HIGH sin parche disponible.
+          # TODO:  Escanear cada imagen de contenedor construida antes de publicarla en el registro.
+          #TODO:  Integrar al menos una herramienta de Static Application Security Testing (SAST) en el pipeline.
+          # TODO: fallar el job si no se cumplen los umbrales definidos.
+          # Ejemplo posible:
+          # trivy fs --severity HIGH,CRITICAL --exit-code 1 .
