@@ -8,11 +8,6 @@ variable "aws_region" {
   type        = string
 }
 
-variable "vpc_id" {
-  description = "ID de la VPC."
-  type        = string
-}
-
 variable "private_subnet_ids" {
   description = "Subredes privadas para tareas Fargate."
   type        = list(string)
@@ -25,11 +20,6 @@ variable "security_group_id" {
 
 variable "lab_role_arn" {
   description = "ARN del rol LabRole usado como task execution role y task role."
-  type        = string
-}
-
-variable "service_namespace" {
-  description = "Nombre DNS privado para service discovery."
   type        = string
 }
 

@@ -1,17 +1,19 @@
 ENV ?= dev
 
-TF_DIR := environment
+INFRA_DIR := infra
+TF_DIR := $(INFRA_DIR)/environment
+BOOTSTRAP_DIR := $(INFRA_DIR)/bootstrap
 
 .PHONY: bootstrap-init bootstrap-plan bootstrap-apply init plan apply validate fmt
 
 bootstrap-init:
-	cd bootstrap && terraform init
+	cd $(BOOTSTRAP_DIR) && terraform init
 
 bootstrap-plan:
-	cd bootstrap && terraform plan -var-file=tfvars/shared.tfvars
+	cd $(BOOTSTRAP_DIR) && terraform plan -var-file=tfvars/shared.tfvars
 
 bootstrap-apply:
-	cd bootstrap && terraform apply -var-file=tfvars/shared.tfvars
+	cd $(BOOTSTRAP_DIR) && terraform apply -var-file=tfvars/shared.tfvars
 
 init:
 	cd $(TF_DIR) && terraform init -reconfigure -backend-config=backend/$(ENV).hcl
@@ -26,4 +28,4 @@ validate:
 	cd $(TF_DIR) && terraform validate
 
 fmt:
-	terraform fmt -recursive .
+	terraform fmt -recursive $(INFRA_DIR)

@@ -15,12 +15,6 @@ variable "state_bucket_name" {
   type        = string
 }
 
-variable "lock_table_name" {
-  description = "Nombre de la tabla DynamoDB para bloqueo de concurrencia."
-  type        = string
-  default     = "devops-retail-store-terraform-locks"
-}
-
 variable "tags" {
   description = "Tags comunes para los recursos."
   type        = map(string)

@@ -13,22 +13,23 @@ Esta carpeta implementa la arquitectura definida en `docs/infrastructure.md`:
 
 ## Bootstrap del estado remoto
 
-Crear primero el bucket S3 y la tabla DynamoDB. El nombre del bucket y la tabla estan en `bootstrap/tfvars/shared.tfvars`:
+Los comandos `make` se ejecutan desde la raiz del repositorio `devops-retail-store`.
+
+Crear primero el bucket S3 para el estado remoto. El nombre del bucket esta en `infra/bootstrap/tfvars/shared.tfvars`:
 
 ```bash
-cd infra
 make bootstrap-init
 make bootstrap-apply
 ```
 
-El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes.
+El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes. El bloqueo de concurrencia se realiza con `use_lockfile = true` en el backend S3 de cada ambiente.
 
 ## Ambientes
 
-El codigo Terraform de la infraestructura vive en `environment/` y es el mismo para todos los ambientes. Los parametros cambian mediante archivos `.tfvars`:
+El codigo Terraform de la infraestructura vive en `infra/environment/` y es el mismo para todos los ambientes. Los parametros cambian mediante archivos `.tfvars`:
 
 ```text
-environment/tfvars/
+infra/environment/tfvars/
 ├── dev.tfvars
 ├── test.tfvars
 └── prod.tfvars
@@ -37,7 +38,7 @@ environment/tfvars/
 Cada ambiente tiene tambien un archivo de backend con un `key` distinto dentro del mismo bucket S3:
 
 ```text
-environment/backend/
+infra/environment/backend/
 ├── dev.hcl
 ├── test.hcl
 └── prod.hcl
@@ -46,7 +47,6 @@ environment/backend/
 Inicializar y desplegar `dev`:
 
 ```bash
-cd infra
 make init ENV=dev
 make plan ENV=dev
 make apply ENV=dev

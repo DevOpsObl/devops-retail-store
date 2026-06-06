@@ -54,7 +54,7 @@ test.tfvars
 prod.tfvars
 ```
 
-Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate, cantidad deseada de replicas por servicio y URIs de imagenes publicadas en ECR. El estado remoto compartira el mismo bucket S3 y la misma tabla DynamoDB, pero usara un `key` distinto por ambiente, por ejemplo `dev/terraform.tfstate`, `test/terraform.tfstate` y `prod/terraform.tfstate`.
+Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate, cantidad deseada de replicas por servicio y URIs de imagenes publicadas en ECR. El estado remoto compartira el mismo bucket S3, pero usara un `key` distinto por ambiente, por ejemplo `dev/terraform.tfstate`, `test/terraform.tfstate` y `prod/terraform.tfstate`. El bloqueo de concurrencia del estado se realizara con lockfile nativo del backend S3.
 
 ## Networking
 
@@ -123,7 +123,7 @@ Como el despliegue se realizara dentro de un laboratorio de AWS, los recursos IA
 
 Los outputs de Terraform expondran los datos relevantes de la infraestructura y estaran documentados con descripcion. Se publicara el DNS del balanceador, el ID de la VPC, los IDs de las subredes publicas, los IDs de las subredes privadas y los endpoints necesarios para operacion e integracion.
 
-El estado de Terraform se almacenara en un backend remoto sobre **S3**. El bucket de estado tendra cifrado habilitado, versionado y bloqueo de concurrencia mediante **DynamoDB**. No se utilizara estado local para la infraestructura objetivo.
+El estado de Terraform se almacenara en un backend remoto sobre **S3**. El bucket de estado tendra cifrado habilitado, versionado y bloqueo de concurrencia mediante lockfile nativo del backend S3. No se utilizara estado local para la infraestructura objetivo.
 
 Los secretos se gestionaran de forma segura. No se almacenaran credenciales, claves, tokens ni contrasenas en el codigo Terraform ni en archivos `.tfvars` versionados. Los valores sensibles se obtendran desde **AWS Secrets Manager** o **SSM Parameter Store**, y las variables sensibles se declararan con `sensitive = true`.
 

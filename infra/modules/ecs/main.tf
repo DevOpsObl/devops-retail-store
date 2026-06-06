@@ -9,37 +9,6 @@ resource "aws_ecs_cluster" "this" {
   tags = var.tags
 }
 
-resource "aws_service_discovery_private_dns_namespace" "this" {
-  name        = var.service_namespace
-  description = "Service discovery privado para Retail Store"
-  vpc         = var.vpc_id
-
-  tags = var.tags
-}
-
-resource "aws_service_discovery_service" "service" {
-  for_each = var.services
-
-  name = each.key
-
-  dns_config {
-    namespace_id = aws_service_discovery_private_dns_namespace.this.id
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-
-    routing_policy = "MULTIVALUE"
-  }
-
-  health_check_custom_config {
-    failure_threshold = 1
-  }
-
-  tags = var.tags
-}
-
 resource "aws_ecs_task_definition" "service" {
   for_each = var.services
 
@@ -105,10 +74,6 @@ resource "aws_ecs_service" "service" {
     subnets          = var.private_subnet_ids
     security_groups  = [var.security_group_id]
     assign_public_ip = false
-  }
-
-  service_registries {
-    registry_arn = aws_service_discovery_service.service[each.key].arn
   }
 
   dynamic "load_balancer" {

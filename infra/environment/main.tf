@@ -4,7 +4,6 @@ data "aws_iam_role" "lab_role" {
 
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  namespace   = "${var.environment}.retail.local"
   services    = toset(["ui", "admin", "catalog", "carts", "checkout", "orders"])
 
   common_tags = merge(
@@ -131,6 +130,7 @@ module "alb" {
 
 locals {
   secret_arn = module.secrets.secret_arn
+  alb_url    = "http://${module.alb.alb_dns_name}"
   db_host    = module.database.address
   db_port    = tostring(module.database.port)
   redis_url  = "redis://${module.redis.endpoint}:${module.redis.port}"
@@ -145,10 +145,10 @@ locals {
       public        = true
       environment = {
         PORT                         = "8080"
-        RETAIL_UI_ENDPOINTS_CATALOG  = "http://catalog.${local.namespace}:8080"
-        RETAIL_UI_ENDPOINTS_CARTS    = "http://carts.${local.namespace}:8080"
-        RETAIL_UI_ENDPOINTS_CHECKOUT = "http://checkout.${local.namespace}:8080"
-        RETAIL_UI_ENDPOINTS_ORDERS   = "http://orders.${local.namespace}:8080"
+        RETAIL_UI_ENDPOINTS_CATALOG  = local.alb_url
+        RETAIL_UI_ENDPOINTS_CARTS    = local.alb_url
+        RETAIL_UI_ENDPOINTS_CHECKOUT = local.alb_url
+        RETAIL_UI_ENDPOINTS_ORDERS   = local.alb_url
       }
       secrets = {}
     }
@@ -220,7 +220,7 @@ locals {
         PORT                                  = "8080"
         RETAIL_CHECKOUT_PERSISTENCE_PROVIDER  = "redis"
         RETAIL_CHECKOUT_PERSISTENCE_REDIS_URL = local.redis_url
-        RETAIL_CHECKOUT_ENDPOINTS_ORDERS      = "http://orders.${local.namespace}:8080"
+        RETAIL_CHECKOUT_ENDPOINTS_ORDERS      = local.alb_url
       }
       secrets = {}
     }
@@ -249,11 +249,9 @@ module "ecs" {
 
   name_prefix        = local.name_prefix
   aws_region         = var.aws_region
-  vpc_id             = module.networking.vpc_id
   private_subnet_ids = module.networking.private_subnet_ids
   security_group_id  = module.security.ecs_sg_id
   lab_role_arn       = data.aws_iam_role.lab_role.arn
-  service_namespace  = local.namespace
   log_group_names    = module.monitoring.log_group_names
   target_group_arns  = module.alb.target_group_arns
   services           = local.service_definitions

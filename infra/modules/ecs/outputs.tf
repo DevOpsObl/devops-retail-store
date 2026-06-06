@@ -12,8 +12,3 @@ output "service_names" {
   description = "Nombres de servicios ECS."
   value       = { for name, service in aws_ecs_service.service : name => service.name }
 }
-
-output "service_discovery_namespace" {
-  description = "Namespace privado de Cloud Map."
-  value       = aws_service_discovery_private_dns_namespace.this.name
-}
