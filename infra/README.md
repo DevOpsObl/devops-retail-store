@@ -1,0 +1,69 @@
+# Infraestructura Terraform
+
+Esta carpeta implementa la arquitectura definida en `docs/infrastructure.md`:
+
+- Amazon ECR para publicar las imagenes Docker de los microservicios.
+- Amazon ECS con Fargate para ejecutar `ui`, `admin`, `catalog`, `carts`, `checkout` y `orders`.
+- Application Load Balancer publico.
+- VPC con subredes publicas y privadas, Internet Gateway y NAT Gateway.
+- Amazon RDS PostgreSQL y Amazon ElastiCache Redis en subredes privadas.
+- AWS Secrets Manager para credenciales generadas por Terraform.
+- CloudWatch Logs y una Lambda de automatizacion.
+- Uso del rol IAM `LabRole` del laboratorio AWS.
+
+## Bootstrap del estado remoto
+
+Crear primero el bucket S3 y la tabla DynamoDB. El nombre del bucket y la tabla estan en `bootstrap/tfvars/shared.tfvars`:
+
+```bash
+cd infra
+make bootstrap-init
+make bootstrap-apply
+```
+
+El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes.
+
+## Ambientes
+
+El codigo Terraform de la infraestructura vive en `environment/` y es el mismo para todos los ambientes. Los parametros cambian mediante archivos `.tfvars`:
+
+```text
+environment/tfvars/
+├── dev.tfvars
+├── test.tfvars
+└── prod.tfvars
+```
+
+Cada ambiente tiene tambien un archivo de backend con un `key` distinto dentro del mismo bucket S3:
+
+```text
+environment/backend/
+├── dev.hcl
+├── test.hcl
+└── prod.hcl
+```
+
+Inicializar y desplegar `dev`:
+
+```bash
+cd infra
+make init ENV=dev
+make plan ENV=dev
+make apply ENV=dev
+```
+
+Para `test` o `prod`, cambiar solo `ENV`:
+
+```bash
+make init ENV=test
+make plan ENV=test
+
+make init ENV=prod
+make plan ENV=prod
+```
+
+Luego de crear ECR, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. ECS espera encontrar el tag definido en `image_tag`, por defecto `latest`.
+
+## Nota sobre PostgreSQL
+
+RDS crea una base inicial llamada `orders`. Las aplicaciones quedan configuradas para usar `catalogdb`, `cartdb` y `orders`; `catalogdb` y `cartdb` deben crearse mediante un paso de inicializacion/migracion con acceso privado al RDS.

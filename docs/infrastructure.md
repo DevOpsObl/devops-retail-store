@@ -17,15 +17,22 @@ infra/
 ├── bootstrap/
 │   ├── main.tf
 │   ├── variables.tf
-│   └── outputs.tf
-├── environments/
-│   ├── dev/
-│   │   ├── backend.tf
-│   │   ├── main.tf
-│   │   ├── terraform.tfvars
-│   │   └── outputs.tf
-│   ├── test/
-│   └── prod/
+│   ├── outputs.tf
+│   └── tfvars/
+│       └── shared.tfvars
+├── environment/
+│   ├── backend.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── backend/
+│   │   ├── dev.hcl
+│   │   ├── test.hcl
+│   │   └── prod.hcl
+│   └── tfvars/
+│       ├── dev.tfvars
+│       ├── test.tfvars
+│       └── prod.tfvars
 └── modules/
     ├── networking/
     ├── security/
@@ -39,7 +46,7 @@ infra/
     └── lambda/
 ```
 
-La configuracion se parametrizara por ambiente mediante archivos `.tfvars` diferenciados:
+La configuracion usara el mismo codigo Terraform para todos los ambientes. Los parametros se separaran mediante archivos `.tfvars` diferenciados:
 
 ```text
 dev.tfvars
@@ -47,7 +54,7 @@ test.tfvars
 prod.tfvars
 ```
 
-Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate, cantidad deseada de replicas por servicio y URIs de imagenes publicadas en ECR.
+Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate, cantidad deseada de replicas por servicio y URIs de imagenes publicadas en ECR. El estado remoto compartira el mismo bucket S3 y la misma tabla DynamoDB, pero usara un `key` distinto por ambiente, por ejemplo `dev/terraform.tfstate`, `test/terraform.tfstate` y `prod/terraform.tfstate`.
 
 ## Networking
 
