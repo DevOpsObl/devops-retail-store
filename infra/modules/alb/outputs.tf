@@ -1,3 +1,4 @@
+# Datos del ALB que consume el ambiente y el modulo ECS.
 output "alb_dns_name" {
   description = "DNS publico del Application Load Balancer."
   value       = aws_lb.this.dns_name

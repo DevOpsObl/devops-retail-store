@@ -1,3 +1,4 @@
+# Grupo de subredes privadas donde RDS puede crear la instancia PostgreSQL.
 resource "aws_db_subnet_group" "this" {
   name       = "${var.name_prefix}-rds-subnets"
   subnet_ids = var.private_subnet_ids
@@ -5,6 +6,7 @@ resource "aws_db_subnet_group" "this" {
   tags = var.tags
 }
 
+# Instancia PostgreSQL administrada para persistencia de catalog, carts y orders.
 resource "aws_db_instance" "postgres" {
   identifier = "${var.name_prefix}-postgres"
 

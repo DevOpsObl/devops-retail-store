@@ -1,20 +1,24 @@
+# Password generada para el usuario maestro de PostgreSQL.
 resource "random_password" "db" {
   length           = 20
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+# Password generada para el usuario administrador de la aplicacion.
 resource "random_password" "admin" {
   length           = 20
   special          = true
   override_special = "!#$%&*()-_=+[]{}<>:?"
 }
 
+# Secreto aleatorio usado para firmar JWT del panel admin.
 resource "random_password" "admin_jwt" {
   length  = 32
   special = false
 }
 
+# Contenedor logico del secreto en AWS Secrets Manager.
 resource "aws_secretsmanager_secret" "app" {
   name        = "${var.name_prefix}/app-secrets"
   description = "Credenciales para Retail Store"
@@ -22,6 +26,7 @@ resource "aws_secretsmanager_secret" "app" {
   tags = var.tags
 }
 
+# Version actual del secreto. Se guarda como JSON para referenciar campos individuales desde ECS.
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
 

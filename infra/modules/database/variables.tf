@@ -1,3 +1,4 @@
+# Entradas para la instancia PostgreSQL administrada en RDS.
 variable "name_prefix" {
   description = "Prefijo para RDS."
   type        = string

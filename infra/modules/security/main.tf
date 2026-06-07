@@ -1,3 +1,4 @@
+# Security group del ALB: recibe HTTP/HTTPS desde internet.
 resource "aws_security_group" "alb" {
   name        = "${var.name_prefix}-alb-sg"
   description = "Permite HTTP/HTTPS desde internet hacia el ALB"
@@ -32,6 +33,7 @@ resource "aws_security_group" "alb" {
   })
 }
 
+# Security group de ECS: acepta trafico desde el ALB y permite trafico interno en 8080.
 resource "aws_security_group" "ecs" {
   name        = "${var.name_prefix}-ecs-sg"
   description = "Permite trafico desde el ALB hacia tareas ECS Fargate"
@@ -66,6 +68,7 @@ resource "aws_security_group" "ecs" {
   })
 }
 
+# Security group de RDS: permite PostgreSQL solo desde tareas ECS.
 resource "aws_security_group" "rds" {
   name        = "${var.name_prefix}-rds-sg"
   description = "Permite PostgreSQL solo desde ECS"
@@ -92,6 +95,7 @@ resource "aws_security_group" "rds" {
   })
 }
 
+# Security group de Redis: permite puerto 6379 solo desde tareas ECS.
 resource "aws_security_group" "redis" {
   name        = "${var.name_prefix}-redis-sg"
   description = "Permite Redis solo desde ECS"
@@ -118,6 +122,7 @@ resource "aws_security_group" "redis" {
   })
 }
 
+# Security group de Lambda: permite salida hacia servicios privados si la funcion lo necesita.
 resource "aws_security_group" "lambda" {
   name        = "${var.name_prefix}-lambda-sg"
   description = "Permite acceso privado para automatizaciones Lambda"

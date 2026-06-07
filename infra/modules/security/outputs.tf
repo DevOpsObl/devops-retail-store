@@ -1,3 +1,4 @@
+# Security groups exportados para conectar los demas modulos.
 output "alb_sg_id" {
   description = "Security group del ALB."
   value       = aws_security_group.alb.id

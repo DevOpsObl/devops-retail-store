@@ -1,3 +1,4 @@
+# Tags comunes aplicados a los recursos de bootstrap.
 locals {
   tags = merge(
     {
@@ -9,12 +10,14 @@ locals {
   )
 }
 
+# Bucket S3 centralizado donde Terraform almacena el estado remoto.
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 
   tags = local.tags
 }
 
+# Habilita versionado para poder recuperar versiones anteriores del estado.
 resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -23,6 +26,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
   }
 }
 
+# Cifra el estado en reposo usando cifrado administrado por S3.
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -33,6 +37,7 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
+# Bloquea cualquier exposicion publica accidental del bucket de estado.
 resource "aws_s3_bucket_public_access_block" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 

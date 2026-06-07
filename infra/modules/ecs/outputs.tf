@@ -1,3 +1,4 @@
+# Datos principales del cluster y servicios ECS creados.
 output "cluster_name" {
   description = "Nombre del cluster ECS."
   value       = aws_ecs_cluster.this.name

@@ -1,3 +1,4 @@
+# Log group de CloudWatch por microservicio ECS.
 resource "aws_cloudwatch_log_group" "service" {
   for_each = var.services
 

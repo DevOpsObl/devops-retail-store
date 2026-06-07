@@ -1,3 +1,4 @@
+# Entradas para crear log groups de CloudWatch por servicio.
 variable "name_prefix" {
   description = "Prefijo para recursos de monitoreo."
   type        = string

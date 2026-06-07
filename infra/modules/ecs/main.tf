@@ -1,3 +1,4 @@
+# Cluster ECS que agrupa los servicios Fargate del ambiente.
 resource "aws_ecs_cluster" "this" {
   name = "${var.name_prefix}-cluster"
 
@@ -9,6 +10,7 @@ resource "aws_ecs_cluster" "this" {
   tags = var.tags
 }
 
+# Task definition por microservicio. Define imagen, recursos, variables, secretos y logs.
 resource "aws_ecs_task_definition" "service" {
   for_each = var.services
 
@@ -32,18 +34,21 @@ resource "aws_ecs_task_definition" "service" {
           protocol      = "tcp"
         }
       ]
+      # Variables no sensibles que puede ver la task definition.
       environment = [
         for name, value in each.value.environment : {
           name  = name
           value = value
         }
       ]
+      # Variables sensibles leidas desde Secrets Manager en tiempo de ejecucion.
       secrets = [
         for name, value_from in each.value.secrets : {
           name      = name
           valueFrom = value_from
         }
       ]
+      # Envia stdout/stderr del contenedor al log group correspondiente.
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -58,6 +63,7 @@ resource "aws_ecs_task_definition" "service" {
   tags = var.tags
 }
 
+# Servicio ECS Fargate por microservicio. Mantiene la cantidad deseada de tareas.
 resource "aws_ecs_service" "service" {
   for_each = var.services
 
@@ -76,6 +82,7 @@ resource "aws_ecs_service" "service" {
     assign_public_ip = false
   }
 
+  # Registra la task en el target group del ALB cuando el servicio es publico.
   dynamic "load_balancer" {
     for_each = each.value.public && contains(keys(var.target_group_arns), each.key) ? [1] : []
 

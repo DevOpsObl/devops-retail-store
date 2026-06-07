@@ -1,7 +1,9 @@
+# Lee el rol LabRole existente en el laboratorio AWS. No se crea un rol nuevo.
 data "aws_iam_role" "lab_role" {
   name = var.lab_role_name
 }
 
+# Valores derivados que se reutilizan en nombres, tags y reglas del ALB.
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
   services    = toset(["ui", "admin", "catalog", "carts", "checkout", "orders"])
@@ -49,6 +51,7 @@ locals {
   }
 }
 
+# Crea la VPC, subredes publicas/privadas, rutas, IGW y NAT Gateway.
 module "networking" {
   source = "../modules/networking"
 
@@ -60,6 +63,7 @@ module "networking" {
   tags                 = local.common_tags
 }
 
+# Crea security groups para ALB, ECS, RDS, Redis y Lambda.
 module "security" {
   source = "../modules/security"
 
@@ -68,6 +72,7 @@ module "security" {
   tags        = local.common_tags
 }
 
+# Crea los repositorios ECR donde se publican las imagenes Docker.
 module "ecr" {
   source = "../modules/ecr"
 
@@ -76,6 +81,7 @@ module "ecr" {
   tags        = local.common_tags
 }
 
+# Genera passwords y secretos en AWS Secrets Manager.
 module "secrets" {
   source = "../modules/secrets"
 
@@ -85,6 +91,7 @@ module "secrets" {
   tags           = local.common_tags
 }
 
+# Crea la instancia PostgreSQL administrada en RDS.
 module "database" {
   source = "../modules/database"
 
@@ -98,6 +105,7 @@ module "database" {
   tags               = local.common_tags
 }
 
+# Crea Redis administrado en ElastiCache para checkout.
 module "redis" {
   source = "../modules/redis"
 
@@ -108,6 +116,7 @@ module "redis" {
   tags               = local.common_tags
 }
 
+# Crea CloudWatch Log Groups para los contenedores ECS.
 module "monitoring" {
   source = "../modules/monitoring"
 
@@ -117,6 +126,7 @@ module "monitoring" {
   tags              = local.common_tags
 }
 
+# Crea el ALB publico, target groups y reglas por path.
 module "alb" {
   source = "../modules/alb"
 
@@ -128,6 +138,7 @@ module "alb" {
   tags                  = local.common_tags
 }
 
+# Configuracion final de runtime para cada servicio ECS.
 locals {
   secret_arn = module.secrets.secret_arn
   alb_url    = "http://${module.alb.alb_dns_name}"
@@ -152,6 +163,7 @@ locals {
       }
       secrets = {}
     }
+    # Admin se conecta directo a PostgreSQL y recibe credenciales desde Secrets Manager.
     admin = {
       image         = "${module.ecr.repository_urls["admin"]}:${var.image_tag}"
       cpu           = var.service_cpu["admin"]
@@ -172,6 +184,7 @@ locals {
         ADMIN_JWT_SECRET = "${local.secret_arn}:admin_jwt_secret::"
       }
     }
+    # Catalog usa PostgreSQL y expone endpoints bajo /catalog.
     catalog = {
       image         = "${module.ecr.repository_urls["catalog"]}:${var.image_tag}"
       cpu           = var.service_cpu["catalog"]
@@ -190,6 +203,7 @@ locals {
         RETAIL_CATALOG_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
       }
     }
+    # Carts usa PostgreSQL y expone endpoints bajo /carts.
     carts = {
       image         = "${module.ecr.repository_urls["carts"]}:${var.image_tag}"
       cpu           = var.service_cpu["carts"]
@@ -209,6 +223,7 @@ locals {
         CART_POSTGRES_PASSWORD = "${local.secret_arn}:db_password::"
       }
     }
+    # Checkout usa Redis y llama a orders a traves del ALB comun.
     checkout = {
       image         = "${module.ecr.repository_urls["checkout"]}:${var.image_tag}"
       cpu           = var.service_cpu["checkout"]
@@ -224,6 +239,7 @@ locals {
       }
       secrets = {}
     }
+    # Orders usa PostgreSQL y expone endpoints bajo /orders.
     orders = {
       image         = "${module.ecr.repository_urls["orders"]}:${var.image_tag}"
       cpu           = var.service_cpu["orders"]
@@ -244,6 +260,7 @@ locals {
   }
 }
 
+# Crea cluster ECS, task definitions y servicios Fargate para cada microservicio.
 module "ecs" {
   source = "../modules/ecs"
 
@@ -260,6 +277,7 @@ module "ecs" {
   depends_on = [module.secrets]
 }
 
+# Crea una Lambda simple para automatizaciones operativas programadas.
 module "lambda" {
   source = "../modules/lambda"
 

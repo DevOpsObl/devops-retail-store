@@ -1,3 +1,4 @@
+# VPC principal del ambiente. Habilita DNS para que servicios AWS resuelvan nombres internos.
 resource "aws_vpc" "this" {
   cidr_block           = var.vpc_cidr
   enable_dns_hostnames = true
@@ -8,6 +9,7 @@ resource "aws_vpc" "this" {
   })
 }
 
+# Internet Gateway para permitir entrada/salida publica desde subredes publicas.
 resource "aws_internet_gateway" "this" {
   vpc_id = aws_vpc.this.id
 
@@ -16,6 +18,7 @@ resource "aws_internet_gateway" "this" {
   })
 }
 
+# Subredes publicas distribuidas por zona de disponibilidad. Alojan ALB y NAT Gateway.
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
 
@@ -30,6 +33,7 @@ resource "aws_subnet" "public" {
   })
 }
 
+# Subredes privadas distribuidas por zona. Alojan ECS Fargate, RDS y Redis.
 resource "aws_subnet" "private" {
   count = length(var.private_subnet_cidrs)
 
@@ -44,6 +48,7 @@ resource "aws_subnet" "private" {
   })
 }
 
+# IP elastica asociada al NAT Gateway.
 resource "aws_eip" "nat" {
   domain = "vpc"
 
@@ -52,6 +57,7 @@ resource "aws_eip" "nat" {
   })
 }
 
+# NAT Gateway para que subredes privadas tengan salida a internet sin recibir trafico entrante.
 resource "aws_nat_gateway" "this" {
   allocation_id = aws_eip.nat.id
   subnet_id     = aws_subnet.public[0].id
@@ -63,6 +69,7 @@ resource "aws_nat_gateway" "this" {
   depends_on = [aws_internet_gateway.this]
 }
 
+# Tabla de ruteo publica: envia 0.0.0.0/0 hacia el Internet Gateway.
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
 
@@ -76,6 +83,7 @@ resource "aws_route_table" "public" {
   })
 }
 
+# Asocia cada subnet publica con la tabla de ruteo publica.
 resource "aws_route_table_association" "public" {
   count = length(aws_subnet.public)
 
@@ -83,6 +91,7 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Tabla de ruteo privada: envia 0.0.0.0/0 hacia el NAT Gateway.
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.this.id
 
@@ -96,6 +105,7 @@ resource "aws_route_table" "private" {
   })
 }
 
+# Asocia cada subnet privada con la tabla de ruteo privada.
 resource "aws_route_table_association" "private" {
   count = length(aws_subnet.private)
 

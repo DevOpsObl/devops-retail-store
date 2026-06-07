@@ -1,3 +1,4 @@
+# Define la version de Terraform y los providers que usa la infraestructura.
 terraform {
   required_version = ">= 1.6.0"
 
@@ -17,6 +18,7 @@ terraform {
   }
 }
 
+# Provider AWS para los recursos del ambiente seleccionado.
 provider "aws" {
   region = var.aws_region
 

@@ -1,3 +1,4 @@
+# Entradas del modulo de seguridad: VPC destino, prefijo de nombres y tags.
 variable "name_prefix" {
   description = "Prefijo para nombrar security groups."
   type        = string

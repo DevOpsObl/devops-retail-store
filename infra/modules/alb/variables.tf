@@ -1,3 +1,4 @@
+# Entradas del ALB: red, security group y reglas de servicios.
 variable "name_prefix" {
   description = "Prefijo para nombrar recursos."
   type        = string

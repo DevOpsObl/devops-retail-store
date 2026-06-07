@@ -1,3 +1,4 @@
+# Entradas para el cluster Redis administrado en ElastiCache.
 variable "name_prefix" {
   description = "Prefijo para Redis."
   type        = string

@@ -1,3 +1,4 @@
+# Salidas del secreto. La password se marca sensitive para no imprimirla accidentalmente.
 output "secret_arn" {
   description = "ARN del secreto con credenciales de aplicacion."
   value       = aws_secretsmanager_secret.app.arn

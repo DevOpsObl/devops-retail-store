@@ -1,3 +1,4 @@
+# Entradas para generar y nombrar secretos de la aplicacion.
 variable "name_prefix" {
   description = "Prefijo para secretos."
   type        = string

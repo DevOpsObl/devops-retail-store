@@ -1,3 +1,4 @@
+# Repositorio ECR por microservicio para publicar imagenes Docker.
 resource "aws_ecr_repository" "service" {
   for_each = var.services
 
@@ -15,6 +16,7 @@ resource "aws_ecr_repository" "service" {
   tags = var.tags
 }
 
+# Politica de lifecycle para limitar acumulacion de imagenes antiguas.
 resource "aws_ecr_lifecycle_policy" "service" {
   for_each = aws_ecr_repository.service
 

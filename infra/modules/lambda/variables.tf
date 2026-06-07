@@ -1,3 +1,4 @@
+# Entradas para desplegar la Lambda de automatizacion con LabRole.
 variable "name_prefix" {
   description = "Prefijo para Lambda."
   type        = string

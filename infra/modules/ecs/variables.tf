@@ -1,3 +1,4 @@
+# Entradas del modulo ECS: red privada, roles, logs, target groups y servicios.
 variable "name_prefix" {
   description = "Prefijo para recursos ECS."
   type        = string

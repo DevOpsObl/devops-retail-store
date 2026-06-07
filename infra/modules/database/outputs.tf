@@ -1,3 +1,4 @@
+# Endpoints de RDS usados por los servicios de aplicacion.
 output "endpoint" {
   description = "Endpoint host:port de RDS."
   value       = aws_db_instance.postgres.endpoint

@@ -1,3 +1,4 @@
+# Empaqueta codigo Python inline en un zip para desplegar la Lambda sin archivo externo.
 data "archive_file" "function" {
   type        = "zip"
   output_path = "${path.module}/lambda_function.zip"
@@ -14,6 +15,7 @@ data "archive_file" "function" {
   }
 }
 
+# Funcion Lambda de automatizacion operativa usando el LabRole del laboratorio.
 resource "aws_lambda_function" "automation" {
   function_name    = "${var.name_prefix}-automation"
   description      = "Automatizaciones operativas y de seguridad para Retail Store"
@@ -32,6 +34,7 @@ resource "aws_lambda_function" "automation" {
   tags = var.tags
 }
 
+# Regla programada de EventBridge que dispara la Lambda cada hora.
 resource "aws_cloudwatch_event_rule" "hourly" {
   name                = "${var.name_prefix}-automation-hourly"
   description         = "Invoca la Lambda de automatizacion cada hora"
@@ -40,12 +43,14 @@ resource "aws_cloudwatch_event_rule" "hourly" {
   tags = var.tags
 }
 
+# Conecta la regla programada con la Lambda como destino.
 resource "aws_cloudwatch_event_target" "lambda" {
   rule      = aws_cloudwatch_event_rule.hourly.name
   target_id = "automation"
   arn       = aws_lambda_function.automation.arn
 }
 
+# Permiso para que EventBridge pueda invocar la funcion Lambda.
 resource "aws_lambda_permission" "events" {
   statement_id  = "AllowExecutionFromCloudWatch"
   action        = "lambda:InvokeFunction"

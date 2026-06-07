@@ -1,3 +1,4 @@
+# Salidas del modulo de red usadas por seguridad, ALB, ECS, RDS y Redis.
 output "vpc_id" {
   description = "ID de la VPC."
   value       = aws_vpc.this.id

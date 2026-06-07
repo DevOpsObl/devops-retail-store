@@ -1,3 +1,4 @@
+# Entradas del modulo de red: nombres, CIDRs, zonas y tags.
 variable "name_prefix" {
   description = "Prefijo para nombrar recursos."
   type        = string

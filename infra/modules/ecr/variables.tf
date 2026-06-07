@@ -1,3 +1,4 @@
+# Entradas para crear repositorios ECR por microservicio.
 variable "name_prefix" {
   description = "Prefijo para los repositorios ECR."
   type        = string

@@ -1,3 +1,4 @@
+# URLs y ARNs de repositorios usados para publicar y desplegar imagenes.
 output "repository_urls" {
   description = "URLs de repositorios ECR por servicio."
   value       = { for name, repo in aws_ecr_repository.service : name => repo.repository_url }

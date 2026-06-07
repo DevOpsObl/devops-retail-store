@@ -1,3 +1,4 @@
+# Application Load Balancer publico que recibe trafico HTTP de usuarios.
 resource "aws_lb" "this" {
   name               = "${var.name_prefix}-alb"
   load_balancer_type = "application"
@@ -8,6 +9,7 @@ resource "aws_lb" "this" {
   tags = var.tags
 }
 
+# Target group por microservicio. ECS registra tareas Fargate por IP.
 resource "aws_lb_target_group" "service" {
   for_each = var.services
 
@@ -32,6 +34,7 @@ resource "aws_lb_target_group" "service" {
   tags = var.tags
 }
 
+# Listener HTTP principal. Por defecto envia trafico a la UI.
 resource "aws_lb_listener" "http" {
   load_balancer_arn = aws_lb.this.arn
   port              = 80
@@ -43,6 +46,7 @@ resource "aws_lb_listener" "http" {
   }
 }
 
+# Reglas por path para enrutar /catalog, /carts, /checkout, /orders y admin.
 resource "aws_lb_listener_rule" "service" {
   for_each = {
     for name, config in var.services : name => config
