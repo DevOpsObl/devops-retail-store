@@ -121,7 +121,7 @@ Las tareas ECS Fargate no tendran IP publica. La operacion se realizara mediante
 
 Como el despliegue se realizara dentro de un laboratorio de AWS, los recursos IAM usaran el rol existente **`LabRole`**. Este rol se asociara a las definiciones de tareas ECS como task execution role y, cuando aplique, como task role para permitir la descarga de imagenes desde ECR, el envio de logs a CloudWatch y el acceso controlado a otros servicios necesarios del laboratorio.
 
-Los outputs de Terraform expondran los datos relevantes de la infraestructura y estaran documentados con descripcion. Se publicara el DNS del balanceador, el ID de la VPC, los IDs de las subredes publicas, los IDs de las subredes privadas y los endpoints necesarios para operacion e integracion.
+Los outputs de Terraform expondran los datos relevantes de la infraestructura y estaran documentados con descripcion, como se detalla en la seccion de outputs.
 
 El estado de Terraform se almacenara en un backend remoto sobre **S3**. El bucket de estado tendra cifrado habilitado, versionado y bloqueo de concurrencia mediante lockfile nativo del backend S3. No se utilizara estado local para la infraestructura objetivo.
 
@@ -130,6 +130,29 @@ Los secretos se gestionaran de forma segura. No se almacenaran credenciales, cla
 Se incorporara **AWS Lambda** como servicio serverless para automatizaciones operativas y de seguridad. La funcion Lambda procesara eventos de **CloudWatch** para generar alertas, analizar logs de seguridad y notificar eventos relevantes. Terraform creara la funcion, la asociara al rol **`LabRole`** disponible en el laboratorio cuando corresponda, y definira sus permisos de ejecucion y reglas de invocacion.
 
 La infraestructura resultante quedara definida, versionada y desplegable mediante Terraform, con separacion por ambientes, modulos reutilizables, estado remoto seguro, manejo protegido de secretos y automatizacion serverless integrada.
+
+## Outputs
+
+Los outputs mas relevantes se definiran principalmente en `infra/environment/outputs.tf`, que consolida las salidas de los modulos para facilitar la operacion del ambiente desplegado.
+
+| Output | Origen | Uso principal |
+|--------|--------|---------------|
+| `alb_dns_name` | Modulo `alb` | DNS publico del Application Load Balancer para acceder a la aplicacion y probar endpoints. |
+| `vpc_id` | Modulo `networking` | Identificador de la VPC del ambiente, util para inspeccion, troubleshooting y asociacion con otros recursos. |
+| `public_subnet_ids` | Modulo `networking` | IDs de las subredes publicas donde se ubican el ALB y el NAT Gateway. |
+| `private_subnet_ids` | Modulo `networking` | IDs de las subredes privadas donde corren ECS Fargate, RDS y Redis. |
+| `ecr_repository_urls` | Modulo `ecr` | URLs de los repositorios ECR donde se publican las imagenes Docker de cada microservicio. |
+| `ecs_cluster_name` | Modulo `ecs` | Nombre del cluster ECS Fargate usado para operar los servicios y consultar su estado. |
+| `ecs_service_names` | Modulo `ecs` | Nombres de los servicios ECS creados para `ui`, `admin`, `catalog`, `carts`, `checkout` y `orders`. |
+| `rds_endpoint` | Modulo `database` | Endpoint de PostgreSQL RDS utilizado por los servicios que requieren persistencia relacional. |
+| `redis_endpoint` | Modulo `redis` | Endpoint y puerto de ElastiCache Redis utilizado por `checkout`. |
+| `secret_arn` | Modulo `secrets` | ARN del secreto de AWS Secrets Manager con credenciales de aplicacion y base de datos. |
+| `lambda_function_name` | Modulo `lambda` | Nombre de la Lambda usada para automatizaciones operativas y de seguridad. |
+| `state_bucket_name` | `infra/bootstrap` | Nombre del bucket S3 creado para almacenar el estado remoto de Terraform. |
+
+Ademas, los modulos internos exponen salidas complementarias como ARNs de repositorios ECR, ARN del cluster ECS, ARNs de target groups, identificador de la instancia RDS, security groups, log groups de CloudWatch y ARN de la Lambda. Estas salidas permiten conectar modulos entre si y realizar tareas de diagnostico, pero no todas necesitan mostrarse como outputs finales del ambiente.
+
+Las salidas sensibles se manejaran con cuidado. Por ejemplo, el modulo de secretos marca `db_password` como `sensitive = true` para evitar que Terraform imprima la contrasena accidentalmente en consola o logs.
 
 ## Diagrama de componentes
 

@@ -4,8 +4,9 @@ Documentacion del proyecto obligatorio basada en la aplicacion Retail Store.
 
 ## Indice
 
-- [Infraestructura cloud objetivo](./infrastructure.md)
 - [Avance del proyecto](avance-del-proyecto.md)
+- [Estrategia de ramificacion](./estrategía-ramificación.md)
+- [Infraestructura cloud objetivo](./infrastructure.md)
 
 ## Referencias rapidas
 
