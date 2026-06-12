@@ -1,12 +1,7 @@
 name: Reusable - Analisis de seguridad
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-      - develop
-      # todo: definir ramas
+  workflow_call:
 
 jobs:
   code-scan:

@@ -1,0 +1,150 @@
+# DevSecOps
+
+Este documento describe la estrategia DevSecOps aplicada en el proyecto, las herramientas seleccionadas, los motivos de su elección y la forma en que fueron integradas dentro del pipeline CI/CD para fortalecer la seguridad del ciclo de desarrollo.
+
+## ¿Qué hace DevSecOps?
+
+Antes de empezar a explicar que hacemos y como, debemos de entender el porqué hacemos esto, y que hace a DevSecOps, DevSecOps.
+
+### Definición
+
+Marco que integra desarrollo, seguridad y operaciones en todo el ciclo de vida del software para reducir vulnerabilidades y riesgos de seguridad.
+
+### Componentes clave
+
+- Integración continua:
+  - Los desarrolladores integran código frecuentemente en un repositorio central, donde se compila y prueba automáticamente para detectar errores e incompatibilidades de forma temprana.
+
+- Entrega continua:
+  - Automatiza el paso del código desde compilación hasta un entorno de pruebas, ejecutando validaciones funcionales, de integración, APIs y rendimiento para entregar software listo para producción.
+
+- Seguridad DevSecOps:
+  - Integra la seguridad en todo el ciclo de vida del desarrollo mediante modelado de amenazas y pruebas de seguridad automatizadas para detectar vulnerabilidades cuanto antes.
+
+## Herramientas
+
+### SAST (Static Application Security Testing)
+
+SAST es una técnica de seguridad que analiza el código fuente, bytecode o binarios sin ejecutar la aplicación. Su objetivo es detectar vulnerabilidades, errores de programación y malas prácticas de seguridad en etapas tempranas del desarrollo.
+
+#### Semgrep
+
+Semgrep es una herramienta de SAST de código abierto que analiza el código mediante reglas predefinidas o personalizadas para identificar vulnerabilidades y problemas de calidad.
+
+#### ¿Por qué se eligió Semgrep?
+
+Los motivos principales de elegir Semgrep como nuestra herramienta SAST son:
+
+- Soporta múltiples lenguajes utilizados en el proyecto:
+  - Python
+  - TypeScript
+  - HTML
+  - Dockerfile
+  - Go
+  - HCL
+
+- Se integra fácilmente en pipelines de GitHub Actions.
+- Detecta vulnerabilidades comunes como:
+  - Inyecciones de código.
+  - Uso inseguro de APIs.
+  - Exposición de secretos.
+  - Errores de configuración.
+
+- Genera reportes en formatos estándar como SARIF para integrarse con herramientas de análisis de seguridad.
+
+### SCA (Software Composition Analysis)
+
+SCA es una técnica que permite analizar las dependencias y bibliotecas de terceros utilizadas por una aplicación para identificar vulnerabilidades conocidas (CVEs), componentes obsoletos y riesgos de licenciamiento.
+
+#### Trivy
+
+Trivy es una herramienta de seguridad de código abierto que permite analizar dependencias, sistemas de archivos, imágenes de contenedor y configuraciones en busca de vulnerabilidades conocidas.
+
+#### ¿Por qué se eligió Trivy?
+
+Los motivos principales de elegir Trivy como herramienta de SCA son:
+
+- Soporta múltiples ecosistemas de dependencias:
+  - npm
+  - pip
+  - Go Modules
+  - Maven
+  - NuGet
+
+- Posee una base de datos actualizada de vulnerabilidades conocidas.
+- Es rápida y sencilla de integrar en GitHub Actions.
+- Permite analizar múltiples microservicios desde una misma ejecución.
+- Genera reportes en formatos JSON, SARIF y tablas legibles para auditoría.
+
+### Quality Gate
+
+Un Quality Gate es un conjunto de reglas que determina si una aplicación cumple los requisitos mínimos de seguridad antes de avanzar a la siguiente etapa del pipeline.
+
+#### Trivy
+
+Se utiliza Trivy para evaluar los resultados de los análisis de dependencias e imágenes de contenedor.
+
+#### Criterio definido
+
+El pipeline falla automáticamente cuando se detectan vulnerabilidades de severidad HIGH o CRITICAL.
+
+Este criterio asegura que únicamente se desplieguen artefactos que cumplan con los estándares mínimos de seguridad definidos para el proyecto.
+
+### Escaneo de Imágenes
+
+El escaneo de imágenes permite identificar vulnerabilidades presentes en el sistema operativo base, librerías instaladas y paquetes incluidos dentro de los contenedores.
+
+#### Trivy
+
+Trivy analiza cada imagen Docker generada durante el proceso de integración continua antes de ser publicada en el registro de contenedores.
+
+#### ¿Por qué se eligió Trivy?
+
+- Detecta vulnerabilidades en imágenes base como Alpine, Debian o Ubuntu.
+- Identifica paquetes vulnerables instalados dentro del contenedor.
+- Permite bloquear la publicación de imágenes con riesgos críticos.
+- Facilita la corrección temprana mediante la actualización de imágenes base o dependencias.
+
+### Secret Detection
+
+La detección de secretos busca prevenir la exposición accidental de credenciales, claves de acceso, tokens y cadenas de conexión dentro del repositorio.
+
+#### Gitleaks
+
+Gitleaks es una herramienta de código abierto especializada en detectar secretos expuestos mediante reglas predefinidas y personalizables.
+
+#### ¿Por qué se eligió Gitleaks?
+
+Los motivos principales de elegir Gitleaks son:
+
+- Detecta una amplia variedad de credenciales:
+  - API Keys
+  - Access Tokens
+  - Passwords
+  - Connection Strings
+  - Claves de proveedores cloud
+
+- Se integra fácilmente en GitHub Actions.
+- Permite escanear tanto el código actual como el historial de Git.
+- Falla automáticamente el pipeline cuando se detectan secretos expuestos.
+
+#### Política aplicada
+
+Ninguna contraseña, token, API Key o cadena de conexión debe almacenarse directamente en el código fuente o archivos de configuración del repositorio.
+
+Toda información sensible debe gestionarse mediante:
+
+- GitHub Secrets.
+- Variables de entorno.
+
+## Documentación de hallazgos
+
+Como pedido en el punto 5.5 de la letra del obligatorio, se reportarán todos los hallazgos, y las medidas tomadas.
+
+| Herramienta | Tipo             | Hallazgo Encontrado | Remediación / Justificación |
+| ----------- | ---------------- | ------------------- | --------------------------- |
+| Semgrep     | SAST             | Sin hallazgos       | N/A                         |
+| Trivy       | SCA              | Sin hallazgos       | N/A                         |
+| Trivy       | Quality Gate     | Sin hallazgos       | N/A                         |
+| Trivy       | Container Scan   | Sin hallazgos       | N/A                         |
+| Gitleaks    | Secret Detection | Sin hallazgos       | N/A                         |
