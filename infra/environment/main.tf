@@ -6,7 +6,7 @@ data "aws_iam_role" "lab_role" {
 # Valores derivados que se reutilizan en nombres, tags y reglas del ALB.
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-  services    = toset(["ui", "admin", "catalog", "carts", "checkout", "orders"])
+  services    = toset(["ui", "admin", "catalog", "cart", "checkout", "orders"])
 
   common_tags = merge(
     {
@@ -33,7 +33,7 @@ locals {
       priority      = 110
       health_path   = "/health"
     }
-    carts = {
+    cart = {
       path_patterns = ["/carts/*"]
       priority      = 120
       health_path   = "/health"
@@ -203,12 +203,12 @@ locals {
         RETAIL_CATALOG_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
       }
     }
-    # Carts usa PostgreSQL y expone endpoints bajo /carts.
-    carts = {
-      image         = "${module.ecr.repository_urls["carts"]}:${var.image_tag}"
-      cpu           = var.service_cpu["carts"]
-      memory        = var.service_memory["carts"]
-      desired_count = var.service_desired_count["carts"]
+    # Cart usa PostgreSQL y expone endpoints bajo /carts.
+    cart = {
+      image         = "${module.ecr.repository_urls["cart"]}:${var.image_tag}"
+      cpu           = var.service_cpu["cart"]
+      memory        = var.service_memory["cart"]
+      desired_count = var.service_desired_count["cart"]
       port          = 8080
       public        = true
       environment = {

@@ -15,21 +15,18 @@ concurrency:
 
 permissions:
   contents: read
-  packages: write
   security-events: write
 
 jobs:
-  build_artifacts:
+  build_images:
     name: Build
-    uses: ./.github/workflows/reusable-build-artifacts.yml
+    uses: ./.github/workflows/reusable-build-images.yml
     with:
-      node-version: "22"
-      go-version: "1.24.x"
-      python-version: "3.12"
+      image-tag: ${{ github.sha }}
 
   automated_tests:
     name: Test
-    needs: build_artifacts
+    needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
   code_quality:
@@ -50,8 +47,8 @@ jobs:
       - security_analysis
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
-      registry: ghcr.io
-      image-prefix: ${{ github.repository }}
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-dev
       image-tag: ${{ github.sha }}
     secrets: inherit
 
@@ -66,10 +63,4 @@ jobs:
       - name: Deploy to Dev
         run: |
           echo "Promocion aprobada a Dev para imagenes tag ${{ github.sha }}"
-          # TODO: definir como se desplegara al ambiente Dev.
-          # TODO: agregar kubeconfig/credenciales del ambiente Dev.
-          # TODO: agregar manifiestos Kubernetes o charts Helm.
-          # Ejemplo:
-          # helm upgrade --install retail-store ./deploy/helm/retail-store \
-          #   --namespace retail-dev --create-namespace \
-          #   --set global.imageTag=${{ github.sha }}
+          # TODO: ejecutar Terraform para actualizar ECS usando image_tag=${{ github.sha }}.
