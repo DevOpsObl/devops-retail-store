@@ -65,13 +65,12 @@ jobs:
 
   deploy_test:
     name: Despliegue Test
-    runs-on: ubuntu-latest
     needs: gate_dev_to_test
     if: github.event_name != 'pull_request'
-    environment:
-      name: Test
-    steps:
-      - name: Deploy to Test
-        run: |
-          echo "Promocion aprobada a Test para imagenes tag ${{ github.sha }}"
-          # TODO: ejecutar Terraform para actualizar ECS usando image_tag=${{ github.sha }}.
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: test
+      github-environment: Test
+      aws-region: us-east-1
+      image-tag: ${{ github.sha }}
+    secrets: inherit

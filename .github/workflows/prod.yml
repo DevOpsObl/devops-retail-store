@@ -67,14 +67,12 @@ jobs:
 
   deploy_prod:
     name: Despliegue Prod
-    runs-on: ubuntu-latest
     needs: gate_test_to_prod
     if: github.event_name != 'pull_request'
-    environment:
-      name: Prod
-    steps:
-      - name: Deploy to Prod
-        run: |
-          echo "Promocion aprobada a Prod para imagenes tag ${{ github.sha }}"
-          # TODO: ejecutar Terraform para actualizar ECS usando image_tag=${{ github.sha }}.
-          # TODO: agregar aprobadores requeridos en GitHub Environments para prod.
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: prod
+      github-environment: Prod
+      aws-region: us-east-1
+      image-tag: ${{ github.sha }}
+    secrets: inherit
