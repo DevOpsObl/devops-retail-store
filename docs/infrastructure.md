@@ -2,7 +2,7 @@
 
 La infraestructura se implementara completamente como codigo utilizando **Terraform** sobre **AWS** en la region `us-east-1`.
 
-La primera version productiva se desplegara sobre **Amazon ECS con Fargate**. Los microservicios `ui`, `admin`, `catalog`, `carts`, `checkout` y `orders` se empaquetaran como imagenes Docker, se publicaran en **Amazon ECR** y luego se ejecutaran como servicios independientes dentro de un cluster ECS. De esta forma, no se crearan ni administraran instancias EC2 para alojar la aplicacion.
+La primera version productiva se desplegara sobre **Amazon ECS con Fargate**. Los microservicios `ui`, `admin`, `catalog`, `cart`, `checkout` y `orders` se empaquetaran como imagenes Docker, se publicaran en **Amazon ECR** y luego se ejecutaran como servicios independientes dentro de un cluster ECS. De esta forma, no se crearan ni administraran instancias EC2 para alojar la aplicacion.
 
 Los datos no se alojaran dentro de los contenedores. PostgreSQL se implementara como **Amazon RDS** y Redis como **Amazon ElastiCache**, ambos en subredes privadas. Esto permite que las tareas de ECS Fargate sean reemplazables y que el estado de la aplicacion quede en servicios administrados.
 
@@ -75,7 +75,7 @@ Amazon ECR
 ├── ui
 ├── admin
 ├── catalog
-├── carts
+├── cart
 ├── checkout
 └── orders
 ```
@@ -87,7 +87,7 @@ ECS Fargate cluster
 ├── service-ui
 ├── service-admin
 ├── service-catalog
-├── service-carts
+├── service-cart
 ├── service-checkout
 └── service-orders
 ```
@@ -99,7 +99,7 @@ La persistencia se separara de los contenedores de aplicacion:
 | Componente | Servicio AWS | Uso |
 |------------|--------------|-----|
 | `catalog`  | Amazon RDS PostgreSQL | Base `catalogdb` para productos y tags |
-| `carts`    | Amazon RDS PostgreSQL | Base `cartdb` para items del carrito |
+| `cart`     | Amazon RDS PostgreSQL | Base `cartdb` para items del carrito |
 | `orders`   | Amazon RDS PostgreSQL | Base `orders` para ordenes e items |
 | `checkout` | Amazon ElastiCache Redis | Estado temporal del proceso de checkout |
 
@@ -143,7 +143,7 @@ Los outputs mas relevantes se definiran principalmente en `infra/environment/out
 | `private_subnet_ids` | Modulo `networking` | IDs de las subredes privadas donde corren ECS Fargate, RDS y Redis. |
 | `ecr_repository_urls` | Modulo `ecr` | URLs de los repositorios ECR donde se publican las imagenes Docker de cada microservicio. |
 | `ecs_cluster_name` | Modulo `ecs` | Nombre del cluster ECS Fargate usado para operar los servicios y consultar su estado. |
-| `ecs_service_names` | Modulo `ecs` | Nombres de los servicios ECS creados para `ui`, `admin`, `catalog`, `carts`, `checkout` y `orders`. |
+| `ecs_service_names` | Modulo `ecs` | Nombres de los servicios ECS creados para `ui`, `admin`, `catalog`, `cart`, `checkout` y `orders`. |
 | `rds_endpoint` | Modulo `database` | Endpoint de PostgreSQL RDS utilizado por los servicios que requieren persistencia relacional. |
 | `redis_endpoint` | Modulo `redis` | Endpoint y puerto de ElastiCache Redis utilizado por `checkout`. |
 | `secret_arn` | Modulo `secrets` | ARN del secreto de AWS Secrets Manager con credenciales de aplicacion y base de datos. |

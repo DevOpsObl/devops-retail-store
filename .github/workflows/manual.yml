@@ -1,0 +1,101 @@
+name: CI/CD - Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-environment:
+        description: Ambiente a desplegar
+        required: true
+        type: choice
+        options:
+          - dev
+          - test
+          - prod
+
+concurrency:
+  group: retail-store-manual-${{ inputs.target-environment }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  resolve_environment:
+    name: Resolver ambiente
+    runs-on: ubuntu-latest
+    outputs:
+      tf-environment: ${{ steps.environment.outputs.tf-environment }}
+      github-environment: ${{ steps.environment.outputs.github-environment }}
+      ecr-repository-prefix: ${{ steps.environment.outputs.ecr-repository-prefix }}
+    steps:
+      - name: Resolver nombres del ambiente
+        id: environment
+        run: |
+          case "${{ inputs.target-environment }}" in
+            dev)
+              github_environment="Develop"
+              ;;
+            test)
+              github_environment="Test"
+              ;;
+            prod)
+              github_environment="Prod"
+              ;;
+            *)
+              echo "Ambiente invalido: ${{ inputs.target-environment }}" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "tf-environment=${{ inputs.target-environment }}" >> "$GITHUB_OUTPUT"
+          echo "github-environment=${github_environment}" >> "$GITHUB_OUTPUT"
+          echo "ecr-repository-prefix=devops-retail-store-${{ inputs.target-environment }}" >> "$GITHUB_OUTPUT"
+
+  build_images:
+    name: Build
+    needs: resolve_environment
+    uses: ./.github/workflows/reusable-build-images.yml
+    with:
+      image-tag: ${{ github.sha }}
+
+  automated_tests:
+    name: Test
+    needs: build_images
+    uses: ./.github/workflows/reusable-automated-tests.yml
+
+  code_quality:
+    name: Quality
+    needs: automated_tests
+    uses: ./.github/workflows/reusable-code-quality.yml
+
+  security_analysis:
+    name: Security
+    needs: automated_tests
+    uses: ./.github/workflows/reusable-security-analysis.yml
+
+  publish_images:
+    name: Publish
+    needs:
+      - resolve_environment
+      - code_quality
+      - security_analysis
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: ${{ needs.resolve_environment.outputs.ecr-repository-prefix }}
+      image-tag: ${{ github.sha }}
+    secrets: inherit
+
+  deploy:
+    name: Despliegue
+    needs:
+      - resolve_environment
+      - publish_images
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: ${{ needs.resolve_environment.outputs.tf-environment }}
+      github-environment: ${{ needs.resolve_environment.outputs.github-environment }}
+      aws-region: us-east-1
+      image-tag: ${{ github.sha }}
+    secrets: inherit

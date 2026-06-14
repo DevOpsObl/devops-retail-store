@@ -3,7 +3,7 @@
 Esta carpeta implementa la arquitectura definida en `docs/infrastructure.md`:
 
 - Amazon ECR para publicar las imagenes Docker de los microservicios.
-- Amazon ECS con Fargate para ejecutar `ui`, `admin`, `catalog`, `carts`, `checkout` y `orders`.
+- Amazon ECS con Fargate para ejecutar `ui`, `admin`, `catalog`, `cart`, `checkout` y `orders`.
 - Application Load Balancer publico.
 - VPC con subredes publicas y privadas, Internet Gateway y NAT Gateway.
 - Amazon RDS PostgreSQL y Amazon ElastiCache Redis en subredes privadas.

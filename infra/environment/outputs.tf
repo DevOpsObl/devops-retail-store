@@ -40,7 +40,7 @@ output "ecs_service_names" {
   value       = module.ecs.service_names
 }
 
-# Endpoint de PostgreSQL usado por catalog, carts, orders y admin.
+# Endpoint de PostgreSQL usado por catalog, cart, orders y admin.
 output "rds_endpoint" {
   description = "Endpoint de PostgreSQL RDS."
   value       = module.database.endpoint

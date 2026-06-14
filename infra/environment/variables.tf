@@ -90,7 +90,7 @@ variable "service_desired_count" {
     ui       = 1
     admin    = 1
     catalog  = 1
-    carts    = 1
+    cart     = 1
     checkout = 1
     orders   = 1
   }
@@ -104,7 +104,7 @@ variable "service_cpu" {
     ui       = 256
     admin    = 256
     catalog  = 256
-    carts    = 256
+    cart     = 256
     checkout = 256
     orders   = 256
   }
@@ -118,7 +118,7 @@ variable "service_memory" {
     ui       = 512
     admin    = 512
     catalog  = 512
-    carts    = 512
+    cart     = 512
     checkout = 512
     orders   = 512
   }
