@@ -3,32 +3,65 @@ name: Reusable - Publicacion de imagenes de contenedor
 on:
   workflow_call:
     inputs:
-      registry:
+      aws-region:
         required: true
         type: string
-      image-prefix:
+      ecr-repository-prefix:
         required: true
         type: string
       image-tag:
         required: true
         type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
 
 jobs:
   publish_images:
-    name: Publicacion de imagenes de contenedor
+    name: Publicacion imagen Docker - ${{ matrix.service.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: catalog
+            path: src/catalog
+          - name: orders
+            path: src/orders
+          - name: checkout
+            path: src/checkout
+          - name: ui
+            path: src/ui
+          - name: admin
+            path: src/admin
+          - name: cart
+            path: src/cart
     env:
-      REGISTRY: ${{ inputs.registry }}
-      IMAGE_PREFIX: ${{ inputs.image-prefix }}
+      AWS_REGION: ${{ inputs.aws-region }}
+      ECR_REPOSITORY_PREFIX: ${{ inputs.ecr-repository-prefix }}
       IMAGE_TAG: ${{ inputs.image-tag }}
     steps:
-      - name: Publish container images
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Login a Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build y push a ECR
         run: |
-          echo "TODO: definir como se publicaran las imagenes de contenedor."
-          # TODO: definir registry de contenedores.
-          # TODO: definir estrategia de tags para catalog, orders, checkout, ui, admin y cart.
-          # TODO: agregar login seguro al registry usando secrets.
-          # TODO: construir y publicar las imagenes una vez definida la estrategia.
-          # Ejemplo posible:
-          # docker build -t $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG ./src/<servicio>
-          # docker push $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG
+          image_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.name }}:${IMAGE_TAG}"
+          docker build --tag "$image_uri" ${{ matrix.service.path }}
+          docker push "$image_uri"

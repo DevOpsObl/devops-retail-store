@@ -17,7 +17,7 @@ service_desired_count = {
   ui       = 2
   admin    = 1
   catalog  = 2
-  carts    = 2
+  cart     = 2
   checkout = 2
   orders   = 2
 }
