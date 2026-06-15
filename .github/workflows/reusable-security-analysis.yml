@@ -5,7 +5,7 @@ on:
 
 jobs:
   code-scan:
-    name: Code Scan (Semgrep)
+    name: Code Scan
     runs-on: ubuntu-latest
     container:
       image: semgrep/semgrep
@@ -17,6 +17,10 @@ jobs:
         run: |
           semgrep scan \
             --config=auto \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude=build \
+            --exclude=coverage \
             --sarif \
             --output=semgrep-results.sarif \
             .
@@ -26,3 +30,16 @@ jobs:
         if: always()
         with:
           sarif_file: semgrep-results.sarif
+
+      - name: Trivy SCA Scan
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: "fs"
+          scan-ref: "."
+          format: "table"
+          skip-dirs: node_modules,dist,build,coverage
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

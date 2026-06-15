@@ -32,3 +32,4 @@ jobs:
           # Ejemplo posible:
           # docker build -t $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG ./src/<servicio>
           # docker push $REGISTRY/$IMAGE_PREFIX/<servicio>:$IMAGE_TAG
+          # TODO: Facu C. Agregar scan de container
