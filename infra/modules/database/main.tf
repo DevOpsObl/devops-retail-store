@@ -6,7 +6,7 @@ resource "aws_db_subnet_group" "this" {
   tags = var.tags
 }
 
-# Instancia PostgreSQL administrada para persistencia de catalog, carts y orders.
+# Instancia PostgreSQL administrada para persistencia de catalog, cart y orders.
 resource "aws_db_instance" "postgres" {
   identifier = "${var.name_prefix}-postgres"
 
