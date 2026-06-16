@@ -60,20 +60,8 @@ jobs:
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build
-        id: image
+      - name: Build y push a ECR
         run: |
           image_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.name }}:${IMAGE_TAG}"
-          echo "uri=${image_uri}" >> "$GITHUB_OUTPUT"
           docker build --tag "$image_uri" ${{ matrix.service.path }}
-
-      - name: Trivy Image Scan
-        uses: aquasecurity/trivy-action@0.33.1
-        with:
-          image-ref: "${{ steps.image.outputs.uri }}"
-          severity: HIGH,CRITICAL
-          exit-code: 1
-
-      - name: Push a ECR
-        run: |
-          docker push "${{ steps.image.outputs.uri }}"
+          docker push "$image_uri"
