@@ -42,7 +42,8 @@
   "resolutions": {
     "path-to-regexp": "8.4.2",
     "minimatch": "10.2.3",
-    "multer": "2.2.0"
+    "multer": "2.2.0",
+    "picomatch": "4.0.4"
   },
   "packageManager": "yarn@4.11.0"
 }
