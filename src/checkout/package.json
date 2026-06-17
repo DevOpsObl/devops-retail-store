@@ -39,8 +39,12 @@
     "typescript": "^5.8.3",
     "webpack": "^5.99.6"
   },
-  "overrides": {
-    "picomatch": "4.0.4"
+  "resolutions": {
+    "fast-uri": "3.1.2",
+    "lodash": "4.17.21",
+    "multer": "3.0.0-alpha.2",
+    "picomatch": "4.0.4",
+    "tmp": "0.2.6"
   },
   "packageManager": "yarn@4.11.0"
 }

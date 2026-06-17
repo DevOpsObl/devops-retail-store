@@ -19,7 +19,7 @@
     "@types/pg": "^8.11.6",
     "typescript": "^5.5.4"
   },
-  "resolutions": {
+  "overrides": {
     "picomatch": "4.0.4"
   }
 }
