@@ -141,10 +141,13 @@ Toda información sensible debe gestionarse mediante:
 
 Como pedido en el punto 5.5 de la letra del obligatorio, se reportarán todos los hallazgos, y las medidas tomadas.
 
-| Herramienta | Tipo             | Hallazgo Encontrado | Remediación / Justificación |
-| ----------- | ---------------- | ------------------- | --------------------------- |
-| Semgrep     | SAST             | Sin hallazgos       | N/A                         |
-| Trivy       | SCA              | Sin hallazgos       | N/A                         |
-| Trivy       | Quality Gate     | Sin hallazgos       | N/A                         |
-| Trivy       | Container Scan   | Sin hallazgos       | N/A                         |
-| Gitleaks    | Secret Detection | Sin hallazgos       | N/A                         |
+| Herramienta | Hallazgo Encontrado        | Ubicación  | Remediación                                                                                                                                                                                                                                                                     |
+| ----------- | -------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Trivy       | `path-to-regexp`           | `checkout` | Aunque `@nestjs/platform-express` utiliza la versión `"8.4.2"`, la última versión disponible de `express` continúa dependiendo de `router`, que incorpora `path-to-regexp 8.2.0`, por lo que no fue posible actualizarla directamente sin esperar una corrección del proveedor. |
+| Trivy       | `glob`                     | `checkout` | Se actualizó `@nestjs/cli` y fue necesario actualizar también `rimraf` para incorporar una versión corregida de `glob`.                                                                                                                                                         |
+| Trivy       | `minimatch`                | `checkout` | Se actualizó `@nestjs/cli`, sin embargo, fue necesario forzar una versión más reciente debido a que `fork-ts-checker-webpack-plugin` dependía de una versión vulnerable de `minimatch`.                                                                                         |
+| Trivy       | `picomatch`                | `admin`    | La versión de `picomatch` tuvo que ser forzada a la `"4.0.4"`.                                                                                                                                                                                                                  |
+| Trivy       | `go.opentelemetry.io/otel` | `catalog`  | Se actualizó la versión de `go.opentelemetry.io/otel` y de Go ya que el primero depende de una versión mayor de Go.                                                                                                                                                             |
+| Trivy       | `google.golang.org/grpc`   | `catalog`  | Se actualizó la versión de `google.golang.org/grpc`, ya que `go.opentelemetry.io/otel` trae una versión con vulnerabilidad.                                                                                                                                                     |
+| Trivy       | `github.com/jackc/pgx/v5`  | `orders`   | Se actualizó la versión de `github.com/jackc/pgx/v5`                                                                                                                                                                                                                            |
+| Gitleaks    | `Sin hallazgos`            | `N/A`      | `N/A`                                                                                                                                                                                                                                                                           |
