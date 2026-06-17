@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.24 AS build
+FROM golang:1.25 AS build
 WORKDIR /app
 # COPY . .
 # Copiamos primero go.mod y go.sum para descargar dependencias. (Estilo node_modules)

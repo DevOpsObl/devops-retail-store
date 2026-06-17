@@ -41,7 +41,8 @@
   },
   "resolutions": {
     "path-to-regexp": "8.4.2",
-    "minimatch": "10.2.3"
+    "minimatch": "10.2.3",
+    "multer": "2.2.0"
   },
   "packageManager": "yarn@4.11.0"
 }
