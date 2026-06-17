@@ -15,7 +15,7 @@
     "@types/node": "^22.0.0",
     "typescript": "^5.5.4"
   },
-  "resolutions": {
+  "overrides": {
     "picomatch": "4.0.4"
   }
 }
