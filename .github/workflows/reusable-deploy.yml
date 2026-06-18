@@ -39,10 +39,10 @@ jobs:
       IMAGE_TAG: ${{ inputs.image-tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Configurar credenciales AWS
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-region: ${{ env.AWS_REGION }}
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
