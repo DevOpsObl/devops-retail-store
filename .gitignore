@@ -7,3 +7,7 @@ dist/
 !**/.yarn/releases/
 !**/.yarn/releases/**
 !.yarnrc.yml
+
+# reportes de newman, se generan en cada ejecucion
+reports/newman/
+reports/allure-results/
