@@ -152,4 +152,17 @@ Como pedido en el punto 5.5 de la letra del obligatorio, se reportarán todos lo
 | Trivy       | `github.com/jackc/pgx/v5`  | `orders`   | Se actualizó la versión de `github.com/jackc/pgx/v5`                                                                                                                                                                                                                            |
 | Trivy       | `multer`                   | `checkout` | Se forzó la versión `2.2.0` de `multer`.                                                                                                                                                                                                                                        |
 | Trivy       | `picomatch`                | `ui`       | Se forzó la versión `4.0.4` de `picomatch` porque, `http-proxy-middleware` no trae la necesaria para evitar vulnerabilidades                                                                                                                                                    |
-| Trivy       | `picomatch`                | `ui`       | Se forzó la versión `4.0.4` de `picomatch`.                                                                                                                                                                                                                                     |
+
+## Excepciones
+
+### Componente: ui
+
+Pese a haber forzado a `picomatch` a su versión `4.0.4`, Trivy detecta que existe una versión anterior, `4.0.3`.
+
+Por lo que se optó, después de confirmar que el container tiene dentro la versión correcta, ignorar este error, y tenerlo como un fallo de Trivy a la hora de detectar vulnerabilidades.
+
+![Picomatch](assets/picomatch-error-ui.png)
+
+- Se creó el container con `docker build -t ui:test .` desde `..\src\ui`.
+- Se realizó el scan de `trivy image --severity HIGH,CRITICAL ui:test`.
+- Se corrió el comando `docker run --rm -it ui:test sh -c "npm ls picomatch"`, que ejecuta el `npm ls picomatch` dentro del container, devolviendo que la versión utilizada es la correcta.

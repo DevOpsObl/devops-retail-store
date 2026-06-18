@@ -44,3 +44,4 @@ jobs:
           image-ref: "${{ steps.image.outputs.uri }}"
           severity: HIGH,CRITICAL
           exit-code: 1
+          trivyignore-file: ${{ matrix.service.path }}/.trivyignore
