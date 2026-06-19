@@ -1,4 +1,4 @@
-name: Reusable - Deploy ECS
+name: Deploy ECS
 
 on:
   workflow_call:
@@ -31,8 +31,8 @@ jobs:
   deploy:
     name: ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    # environment:
-    #   name: ${{ inputs.github-environment }}
+    environment:
+      name: ${{ inputs.github-environment }}
     env:
       AWS_REGION: ${{ inputs.aws-region }}
       TF_ENV: ${{ inputs.environment }}

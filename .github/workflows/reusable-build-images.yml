@@ -1,4 +1,4 @@
-name: Reusable - Build de imagenes Docker
+name: Build de imagenes Docker
 
 on:
   workflow_call:

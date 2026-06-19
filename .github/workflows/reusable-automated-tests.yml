@@ -1,4 +1,4 @@
-name: Reusable - Ejecucion de pruebas automatizadas
+name: Ejecucion de pruebas automatizadas
 
 on:
   workflow_call:

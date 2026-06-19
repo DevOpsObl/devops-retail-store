@@ -1,4 +1,4 @@
-name: Reusable - Registry Bootstrap
+name: Registry Bootstrap
 
 on:
   workflow_call:

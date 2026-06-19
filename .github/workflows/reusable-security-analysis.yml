@@ -1,4 +1,4 @@
-name: Reusable - Analisis de seguridad
+name: Analisis de seguridad
 
 on:
   workflow_call:

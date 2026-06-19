@@ -1,4 +1,4 @@
-name: Reusable - Publicacion de imagenes de contenedor
+name: Publicacion de imagenes de contenedor
 
 on:
   workflow_call:

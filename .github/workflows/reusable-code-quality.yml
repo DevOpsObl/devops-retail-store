@@ -1,4 +1,4 @@
-name: Reusable - Analisis de calidad de codigo
+name: Analisis de calidad de codigo
 
 on:
   workflow_call:
