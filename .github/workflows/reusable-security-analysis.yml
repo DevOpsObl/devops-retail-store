@@ -32,32 +32,37 @@ jobs:
             .
 
       - name: Upload Semgrep SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep-results.sarif
+
+  sca-scan:
+    name: Trivy SCA Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Trivy SCA Scan
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
-          scan-ref: "${{ matrix.service.path }}"
+          scan-ref: "."
           format: "table"
           skip-dirs: node_modules,dist,build,coverage
           severity: "CRITICAL,HIGH"
           exit-code: "1"
           ignore-unfixed: true
-          - name: Trivy SCA Scan
-        uses: aquasecurity/trivy-action@v0.36.0
+
+  secrets-scan:
+    name: Gitleaks Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          scan-type: "fs"
-          scan-ref: "${{ matrix.service.path }}"
-          format: "table"
-          skip-dirs: node_modules,dist,build,coverage
-          severity: "CRITICAL,HIGH"
-          exit-code: "1"
-          ignore-unfixed: true
-          trivyignores: "${{ github.workspace }}/${{ matrix.service.path }}/.trivyignore"
+          fetch-depth: 0
 
       - name: Run Gitleaks
         id: gitleaks
