@@ -28,8 +28,8 @@ on:
         required: false
 
 jobs:
-  deploy_ecs:
-    name: Deploy ECS - ${{ inputs.environment }}
+  deploy:
+    name: Deploy - ${{ inputs.environment }}
     runs-on: ubuntu-latest
     # environment:
     #   name: ${{ inputs.github-environment }}
@@ -50,7 +50,7 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: ${{ inputs.terraform-version }}
 
