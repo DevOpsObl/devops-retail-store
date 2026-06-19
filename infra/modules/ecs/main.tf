@@ -90,6 +90,10 @@ resource "aws_ecs_task_definition" "database_init" {
         {
           name  = "PGDATABASE"
           value = var.database_init.initial_database
+        },
+        {
+          name  = "PGSSLMODE"
+          value = "require"
         }
       ]
       secrets = [

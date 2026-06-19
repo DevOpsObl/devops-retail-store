@@ -197,6 +197,7 @@ locals {
         RETAIL_CATALOG_PERSISTENCE_ENDPOINT = module.database.endpoint
         RETAIL_CATALOG_PERSISTENCE_DB_NAME  = "catalogdb"
         RETAIL_CATALOG_PERSISTENCE_USER     = var.db_username
+        RETAIL_CATALOG_PERSISTENCE_SSL_MODE = "require"
       }
       secrets = {
         RETAIL_CATALOG_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
@@ -217,6 +218,7 @@ locals {
         CART_POSTGRES_PORT        = local.db_port
         CART_POSTGRES_DB          = "cartdb"
         CART_POSTGRES_USER        = var.db_username
+        PGSSLMODE                 = "require"
       }
       secrets = {
         CART_POSTGRES_PASSWORD = "${local.secret_arn}:db_password::"
@@ -251,6 +253,7 @@ locals {
         RETAIL_ORDERS_PERSISTENCE_ENDPOINT = module.database.endpoint
         RETAIL_ORDERS_PERSISTENCE_NAME     = "orders"
         RETAIL_ORDERS_PERSISTENCE_USERNAME = var.db_username
+        RETAIL_ORDERS_PERSISTENCE_SSL_MODE = "require"
       }
       secrets = {
         RETAIL_ORDERS_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
