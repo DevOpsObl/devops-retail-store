@@ -71,3 +71,14 @@ jobs:
           terraform -chdir=infra/environment apply -auto-approve \
             -var-file=tfvars/${TF_ENV}.tfvars \
             -var="image_tag=${IMAGE_TAG}"
+
+      - name: Publicar URLs desplegadas
+        run: |
+          alb_dns_name=$(terraform -chdir=infra/environment output -raw alb_dns_name)
+
+          {
+            echo "## URLs desplegadas"
+            echo ""
+            echo "- UI: http://${alb_dns_name}/"
+            echo "- Admin: http://${alb_dns_name}/admin/"
+          } >> "$GITHUB_STEP_SUMMARY"
