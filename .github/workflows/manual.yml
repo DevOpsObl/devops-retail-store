@@ -51,28 +51,25 @@ jobs:
           echo "tf-environment=${{ inputs.target-environment }}" >> "$GITHUB_OUTPUT"
           echo "github-environment=${github_environment}" >> "$GITHUB_OUTPUT"
           echo "ecr-repository-prefix=devops-retail-store-${{ inputs.target-environment }}" >> "$GITHUB_OUTPUT"
+  code_quality:
+    name: Quality
+    uses: ./.github/workflows/reusable-code-quality.yml
+
+  security_analysis:
+    name: Security
+    uses: ./.github/workflows/reusable-security-analysis.yml
+
+  build_images:
+    name: Build
+    needs: security_analysis
+    uses: ./.github/workflows/reusable-build-images.yml
+    with:
+      image-tag: ${{ github.sha }}
 
   automated_tests:
     name: Test
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
-
-  code_quality:
-    name: Quality
-    needs: automated_tests
-    uses: ./.github/workflows/reusable-code-quality.yml
-
-  security_analysis:
-    name: Security
-    needs: automated_tests
-    uses: ./.github/workflows/reusable-security-analysis.yml
-
-  build_images:
-    name: Build
-    needs: resolve_environment
-    uses: ./.github/workflows/reusable-build-images.yml
-    with:
-      image-tag: ${{ github.sha }}
 
   publish_images:
     name: Publish
