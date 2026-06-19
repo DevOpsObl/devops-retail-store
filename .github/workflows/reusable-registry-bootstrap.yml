@@ -1,0 +1,65 @@
+name: Reusable - Registry Bootstrap
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+      terraform-version:
+        required: false
+        type: string
+        default: "1.12.0"
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+
+jobs:
+  bootstrap_registry:
+    name: Registry Bootstrap - ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      TF_ENV: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+
+      - name: Terraform init registry
+        run: |
+          terraform -chdir=infra/registry init \
+            -reconfigure \
+            -backend-config=backend/${TF_ENV}.hcl
+
+      - name: Terraform validate registry
+        run: terraform -chdir=infra/registry validate
+
+      - name: Terraform plan registry
+        run: |
+          terraform -chdir=infra/registry plan \
+            -var-file=tfvars/${TF_ENV}.tfvars
+
+      - name: Terraform apply registry
+        run: |
+          terraform -chdir=infra/registry apply -auto-approve \
+            -var-file=tfvars/${TF_ENV}.tfvars

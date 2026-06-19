@@ -15,13 +15,29 @@ La estructura sera:
 ```text
 infra/
 ├── bootstrap/
+│   ├── versions.tf
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
 │   └── tfvars/
 │       └── shared.tfvars
+├── registry/
+│   ├── backend.tf
+│   ├── versions.tf
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── backend/
+│   │   ├── dev.hcl
+│   │   ├── test.hcl
+│   │   └── prod.hcl
+│   └── tfvars/
+│       ├── dev.tfvars
+│       ├── test.tfvars
+│       └── prod.tfvars
 ├── environment/
 │   ├── backend.tf
+│   ├── versions.tf
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
@@ -54,7 +70,32 @@ test.tfvars
 prod.tfvars
 ```
 
-Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate, cantidad deseada de replicas por servicio y URIs de imagenes publicadas en ECR. El estado remoto compartira el mismo bucket S3, pero usara un `key` distinto por ambiente, por ejemplo `dev/terraform.tfstate`, `test/terraform.tfstate` y `prod/terraform.tfstate`. El bloqueo de concurrencia del estado se realizara con lockfile nativo del backend S3.
+La infraestructura se separara en tres responsabilidades principales:
+
+| Stack | Carpeta | Responsabilidad |
+|-------|---------|-----------------|
+| Bootstrap | `infra/bootstrap` | Crear el bucket S3 usado como backend remoto de Terraform. |
+| Registry | `infra/registry` | Crear los repositorios Amazon ECR por ambiente y microservicio. |
+| Runtime | `infra/environment` | Crear la VPC, seguridad, ALB, ECS Fargate, RDS, Redis, secretos, monitoreo y Lambda. |
+
+Esta separacion evita una dependencia circular del primer despliegue. Las imagenes Docker necesitan repositorios ECR existentes para poder publicarse, pero los servicios ECS necesitan imagenes ya publicadas para arrancar correctamente. Por eso, el registry se provisiona antes de publicar imagenes y el runtime se aplica despues, cuando el tag de imagen ya existe en ECR.
+
+El flujo esperado de CI/CD sera:
+
+```text
+build_images
+automated_tests
+code_quality + security_analysis
+registry_bootstrap
+publish_images
+deploy
+```
+
+`registry_bootstrap` ejecutara el stack `infra/registry`. Luego `publish_images` subira las imagenes Docker al ECR correspondiente. Finalmente `deploy` ejecutara `infra/environment`, que configura ECS usando el `image_tag` ya publicado.
+
+Se evaluo una alternativa donde el bootstrap levantara toda la infraestructura posible antes de publicar imagenes, dejando para `deploy` solo la creacion de ECS y el despliegue de aplicaciones. Esa opcion se descarto porque el ALB y sus reglas necesitan conectarse con target groups y servicios ECS para completar el enrutamiento operativo. Si los servicios no existen todavia, la infraestructura queda parcialmente creada pero sin una vinculacion completa entre balanceador y aplicaciones; ademas, al crear servicios ECS antes de publicar imagenes se vuelve al problema original de tareas intentando descargar tags inexistentes. Por eso se mantuvo un bootstrap acotado al registry y el despliegue runtime completo se realiza despues de publicar las imagenes.
+
+Cada ambiente definira sus propios valores de red, nombres de recursos, tags, parametros de escalado, CPU y memoria de las tareas Fargate y cantidad deseada de replicas por servicio. El estado remoto compartira el mismo bucket S3, pero usara un `key` distinto por stack y ambiente, por ejemplo `registry/dev/terraform.tfstate`, `dev/terraform.tfstate`, `registry/test/terraform.tfstate` y `test/terraform.tfstate`. El bloqueo de concurrencia del estado se realizara con lockfile nativo del backend S3.
 
 ## Networking
 
@@ -68,19 +109,21 @@ Las subredes publicas tendran una ruta por defecto hacia el **Internet Gateway**
 
 ## Alojamiento de microservicios
 
-Los microservicios se construiran como imagenes Docker y se publicaran en repositorios de **Amazon ECR**. Cada microservicio tendra su propia imagen versionada para permitir despliegues independientes y trazables.
+Los microservicios se construiran como imagenes Docker y se publicaran en repositorios de **Amazon ECR** creados por el stack `infra/registry`. Cada microservicio tendra su propia imagen versionada para permitir despliegues independientes y trazables.
 
 ```text
-Amazon ECR
-├── ui
-├── admin
-├── catalog
-├── cart
-├── checkout
-└── orders
+Amazon ECR por ambiente, ejemplo dev
+├── devops-retail-store-dev/ui
+├── devops-retail-store-dev/admin
+├── devops-retail-store-dev/catalog
+├── devops-retail-store-dev/cart
+├── devops-retail-store-dev/checkout
+└── devops-retail-store-dev/orders
 ```
 
-Luego, esas imagenes se ejecutaran en **Amazon ECS con Fargate**. Cada microservicio se definira mediante una task definition y un servicio ECS propio. Fargate administrara la capacidad de computo sin que sea necesario crear, mantener o acceder a instancias EC2.
+Para `test` y `prod` se mantiene la misma convencion, cambiando el prefijo a `devops-retail-store-test` o `devops-retail-store-prod`.
+
+Luego, esas imagenes se ejecutaran en **Amazon ECS con Fargate**, creado por el stack `infra/environment`. Cada microservicio se definira mediante una task definition y un servicio ECS propio. Fargate administrara la capacidad de computo sin que sea necesario crear, mantener o acceder a instancias EC2.
 
 ```text
 ECS Fargate cluster
@@ -133,7 +176,7 @@ La infraestructura resultante quedara definida, versionada y desplegable mediant
 
 ## Outputs
 
-Los outputs mas relevantes se definiran principalmente en `infra/environment/outputs.tf`, que consolida las salidas de los modulos para facilitar la operacion del ambiente desplegado.
+Los outputs mas relevantes se definiran en `infra/registry/outputs.tf` y `infra/environment/outputs.tf`. `registry` expone las URLs de repositorios ECR para publicar imagenes, mientras que `environment` consolida las salidas operativas del ambiente desplegado.
 
 | Output | Origen | Uso principal |
 |--------|--------|---------------|
@@ -141,7 +184,7 @@ Los outputs mas relevantes se definiran principalmente en `infra/environment/out
 | `vpc_id` | Modulo `networking` | Identificador de la VPC del ambiente, util para inspeccion, troubleshooting y asociacion con otros recursos. |
 | `public_subnet_ids` | Modulo `networking` | IDs de las subredes publicas donde se ubican el ALB y el NAT Gateway. |
 | `private_subnet_ids` | Modulo `networking` | IDs de las subredes privadas donde corren ECS Fargate, RDS y Redis. |
-| `ecr_repository_urls` | Modulo `ecr` | URLs de los repositorios ECR donde se publican las imagenes Docker de cada microservicio. |
+| `ecr_repository_urls` | `infra/registry` | URLs de los repositorios ECR donde se publican las imagenes Docker de cada microservicio. |
 | `ecs_cluster_name` | Modulo `ecs` | Nombre del cluster ECS Fargate usado para operar los servicios y consultar su estado. |
 | `ecs_service_names` | Modulo `ecs` | Nombres de los servicios ECS creados para `ui`, `admin`, `catalog`, `cart`, `checkout` y `orders`. |
 | `rds_endpoint` | Modulo `database` | Endpoint de PostgreSQL RDS utilizado por los servicios que requieren persistencia relacional. |

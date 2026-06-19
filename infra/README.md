@@ -24,9 +24,23 @@ make bootstrap-apply
 
 El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes. El bloqueo de concurrencia se realiza con `use_lockfile = true` en el backend S3 de cada ambiente.
 
+## Registry de imagenes
+
+Los repositorios ECR viven en `infra/registry/` y se despliegan antes del runtime. Esto permite publicar imagenes aunque la VPC, ECS, RDS o el ALB todavia no existan.
+
+Inicializar y crear ECR para `dev`:
+
+```bash
+make registry-init ENV=dev
+make registry-plan ENV=dev
+make registry-apply ENV=dev
+```
+
+Para `test` o `prod`, cambiar solo `ENV`. Si un ambiente ya tenia ECR creado desde el stack anterior `infra/environment`, primero hay que migrar/importar esos repositorios al estado de `infra/registry` antes de quitar su ownership del estado anterior.
+
 ## Ambientes
 
-El codigo Terraform de la infraestructura vive en `infra/environment/` y es el mismo para todos los ambientes. Los parametros cambian mediante archivos `.tfvars`:
+El codigo Terraform de la infraestructura runtime vive en `infra/environment/` y es el mismo para todos los ambientes. Los parametros cambian mediante archivos `.tfvars`:
 
 ```text
 infra/environment/tfvars/
@@ -62,7 +76,7 @@ make init ENV=prod
 make plan ENV=prod
 ```
 
-Luego de crear ECR, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. ECS espera encontrar el tag definido en `image_tag`, por defecto `latest`.
+Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. ECS espera encontrar el tag definido en `image_tag`, por defecto `latest`.
 
 ## Nota sobre PostgreSQL
 

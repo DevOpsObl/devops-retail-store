@@ -74,12 +74,23 @@ jobs:
     needs: automated_tests
     uses: ./.github/workflows/reusable-security-analysis.yml
 
-  publish_images:
-    name: Publish
+  registry_bootstrap:
+    name: Registry Bootstrap
     needs:
       - resolve_environment
       - code_quality
       - security_analysis
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: ${{ needs.resolve_environment.outputs.tf-environment }}
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    needs:
+      - resolve_environment
+      - registry_bootstrap
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1

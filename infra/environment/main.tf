@@ -3,6 +3,9 @@ data "aws_iam_role" "lab_role" {
   name = var.lab_role_name
 }
 
+# Cuenta AWS actual, usada para construir las URLs ECR creadas por infra/registry.
+data "aws_caller_identity" "current" {}
+
 # Valores derivados que se reutilizan en nombres, tags y reglas del ALB.
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
@@ -16,6 +19,11 @@ locals {
     },
     var.tags
   )
+
+  ecr_repository_urls = {
+    for service in local.services :
+    service => "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com/${local.name_prefix}/${service}"
+  }
 
   alb_services = {
     ui = {
@@ -69,15 +77,6 @@ module "security" {
 
   name_prefix = local.name_prefix
   vpc_id      = module.networking.vpc_id
-  tags        = local.common_tags
-}
-
-# Crea los repositorios ECR donde se publican las imagenes Docker.
-module "ecr" {
-  source = "../modules/ecr"
-
-  name_prefix = local.name_prefix
-  services    = local.services
   tags        = local.common_tags
 }
 
@@ -148,7 +147,7 @@ locals {
 
   service_definitions = {
     ui = {
-      image         = "${module.ecr.repository_urls["ui"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["ui"]}:${var.image_tag}"
       cpu           = var.service_cpu["ui"]
       memory        = var.service_memory["ui"]
       desired_count = var.service_desired_count["ui"]
@@ -165,7 +164,7 @@ locals {
     }
     # Admin se conecta directo a PostgreSQL y recibe credenciales desde Secrets Manager.
     admin = {
-      image         = "${module.ecr.repository_urls["admin"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["admin"]}:${var.image_tag}"
       cpu           = var.service_cpu["admin"]
       memory        = var.service_memory["admin"]
       desired_count = var.service_desired_count["admin"]
@@ -186,7 +185,7 @@ locals {
     }
     # Catalog usa PostgreSQL y expone endpoints bajo /catalog.
     catalog = {
-      image         = "${module.ecr.repository_urls["catalog"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["catalog"]}:${var.image_tag}"
       cpu           = var.service_cpu["catalog"]
       memory        = var.service_memory["catalog"]
       desired_count = var.service_desired_count["catalog"]
@@ -205,7 +204,7 @@ locals {
     }
     # Cart usa PostgreSQL y expone endpoints bajo /carts.
     cart = {
-      image         = "${module.ecr.repository_urls["cart"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["cart"]}:${var.image_tag}"
       cpu           = var.service_cpu["cart"]
       memory        = var.service_memory["cart"]
       desired_count = var.service_desired_count["cart"]
@@ -225,7 +224,7 @@ locals {
     }
     # Checkout usa Redis y llama a orders a traves del ALB comun.
     checkout = {
-      image         = "${module.ecr.repository_urls["checkout"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["checkout"]}:${var.image_tag}"
       cpu           = var.service_cpu["checkout"]
       memory        = var.service_memory["checkout"]
       desired_count = var.service_desired_count["checkout"]
@@ -241,7 +240,7 @@ locals {
     }
     # Orders usa PostgreSQL y expone endpoints bajo /orders.
     orders = {
-      image         = "${module.ecr.repository_urls["orders"]}:${var.image_tag}"
+      image         = "${local.ecr_repository_urls["orders"]}:${var.image_tag}"
       cpu           = var.service_cpu["orders"]
       memory        = var.service_memory["orders"]
       desired_count = var.service_desired_count["orders"]

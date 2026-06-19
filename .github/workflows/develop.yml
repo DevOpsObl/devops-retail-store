@@ -39,12 +39,22 @@ jobs:
     needs: automated_tests
     uses: ./.github/workflows/reusable-security-analysis.yml
 
-  publish_images:
-    name: Publish
+  registry_bootstrap:
+    name: Registry Bootstrap
     if: github.event_name != 'pull_request'
     needs:
       - code_quality
       - security_analysis
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: dev
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: registry_bootstrap
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
