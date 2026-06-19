@@ -80,4 +80,4 @@ Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los
 
 ## Nota sobre PostgreSQL
 
-RDS crea una base inicial llamada `orders`. Las aplicaciones quedan configuradas para usar `catalogdb`, `cartdb` y `orders`; `catalogdb` y `cartdb` deben crearse mediante un paso de inicializacion/migracion con acceso privado al RDS.
+RDS crea una base inicial llamada `orders`. Las aplicaciones quedan configuradas para usar `catalogdb`, `cartdb` y `orders`; `catalogdb` y `cartdb` se crean automaticamente durante el despliegue mediante una task one-shot de ECS llamada `db-init`, que corre dentro de las subredes privadas con acceso al RDS.

@@ -271,7 +271,16 @@ module "ecs" {
   log_group_names    = module.monitoring.log_group_names
   target_group_arns  = module.alb.target_group_arns
   services           = local.service_definitions
-  tags               = local.common_tags
+  database_init = {
+    enabled                    = true
+    host                       = local.db_host
+    port                       = local.db_port
+    username                   = var.db_username
+    initial_database           = "orders"
+    password_secret_value_from = "${local.secret_arn}:db_password::"
+    databases                  = ["catalogdb", "cartdb"]
+  }
+  tags = local.common_tags
 
   depends_on = [module.secrets]
 }

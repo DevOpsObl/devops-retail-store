@@ -148,6 +148,8 @@ La persistencia se separara de los contenedores de aplicacion:
 
 RDS y ElastiCache se ubicaran en subredes privadas y solo aceptaran conexiones desde el security group de los servicios ECS Fargate de aplicacion.
 
+La instancia RDS PostgreSQL alojara las bases `orders`, `catalogdb` y `cartdb`. RDS crea inicialmente `orders`; antes de levantar los servicios de aplicacion, Terraform ejecutara una task one-shot de ECS llamada `db-init` dentro de las subredes privadas para crear `catalogdb`, `cartdb`, aplicar permisos y preparar la tabla inicial de carrito cuando corresponda.
+
 ## Seguridad de red
 
 Se definiran security groups separados:
