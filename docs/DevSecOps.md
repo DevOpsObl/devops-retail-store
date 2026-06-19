@@ -152,10 +152,14 @@ Como pedido en el punto 5.5 de la letra del obligatorio, se reportarán todos lo
 | Trivy       | `github.com/jackc/pgx/v5`  | `orders`   | Se actualizó la versión de `github.com/jackc/pgx/v5`                                                                                                                                                                                                                            |
 | Trivy       | `multer`                   | `checkout` | Se forzó la versión `2.2.0` de `multer`.                                                                                                                                                                                                                                        |
 | Trivy       | `picomatch`                | `ui`       | Se forzó la versión `4.0.4` de `picomatch` porque, `http-proxy-middleware` no trae la necesaria para evitar vulnerabilidades                                                                                                                                                    |
+| Trivy       | `picomatch`                | `checkout` | Se forzó la versión `4.0.4` de `picomatch`.                                                                                                                                                                                                                                     |
+| Trivy       | `tmp`                      | `checkout` | Se forzó la versión `0.2.7`.                                                                                                                                                                                                                                                    |
+| Trivy       | `lodash`                   | `checkout` | Se forzó la versión `4.18.0`.                                                                                                                                                                                                                                                   |
+| Trivy       | `starlette`                | `cart`     | Se forzó la versión `0.49.1`.                                                                                                                                                                                                                                                   |
 
 ## Excepciones
 
-### Componente: ui
+### Componente: UI
 
 Pese a haber forzado a `picomatch` a su versión `4.0.4`, Trivy detecta que existe una versión anterior, `4.0.3`.
 
@@ -166,3 +170,33 @@ Por lo que se optó, después de confirmar que el container tiene dentro la vers
 - Se creó el container con `docker build -t ui:test .` desde `..\src\ui`.
 - Se realizó el scan de `trivy image --severity HIGH,CRITICAL ui:test`.
 - Se corrió el comando `docker run --rm -it ui:test sh -c "npm ls picomatch"`, que ejecuta el `npm ls picomatch` dentro del container, devolviendo que la versión utilizada es la correcta.
+
+### Componente: Checkout
+
+Pese a haber forzado a `picomatch` a su versión `4.0.4`, Trivy detecta que existe una versión anterior, `4.0.3`.
+
+Por lo que se optó, después de confirmar que el container tiene dentro la versión correcta, ignorar este error, y tenerlo como un fallo de Trivy a la hora de detectar vulnerabilidades.
+
+![Picomatch](assets/picomatch-error-checkout.png)
+
+- Se creó el container con `docker build -t ui:test .` desde `..\src\checkout`.
+- Se realizó el scan de `trivy image --severity HIGH,CRITICAL checkout:test`.
+- Se corrió el comando `docker run --rm -it checkout:test sh -c "yarn why picomatch"`, que ejecuta el `yarn why picomatch`, equivalente a `npm ls picomatch` en yarn, dentro del container, devolviendo que la versión utilizada es la correcta.
+
+### Componente: Admin
+
+Pese a haber forzado a `picomatch` a su versión `4.0.4`, Trivy detecta que existe una versión anterior, `4.0.3`.
+
+Después de confirmar que, `picomatch` no existe dentro del container luego de hacer el build; o sea, que se trata de una dependencia de `dev`; se optó por ignorar este error, y tenerlo como un fallo de Trivy a la hora de detectar vulnerabilidades.
+
+![Picomatch](assets/picomatch-error-admin.png)
+
+- Se creó el container con `docker build -t admin:test .` desde `..\src\admin`.
+- Se realizó el scan de `trivy image --severity HIGH,CRITICAL admin:test`.
+- Se corrió el comando `docker run --rm -it admin:test sh -c "npm ls picomatch"`, que ejecuta el `npm ls picomatch` dentro del container, devolviendo que picomatch no existe en producción.
+
+### Componente: Cart
+
+Pese a que se pudo resolver una vulnerabilidad de `starlette` actualizando a la versión `0.49.1`, existen dos más `CVE-2026-48818` y `CVE-2026-54283`, que, son resueltas en la versión `1.3.1`, pero, instalarla, es completamente imposible, ya que, `fastapi`, en su versión más nueva, **NO** acepta ninguna mayor a la `1.0.0`.
+
+![Starlette](assets/starlette-error-cart.png)
