@@ -31,8 +31,8 @@ jobs:
   deploy_ecs:
     name: Deploy ECS - ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.github-environment }}
+    # environment:
+    #   name: ${{ inputs.github-environment }}
     env:
       AWS_REGION: ${{ inputs.aws-region }}
       TF_ENV: ${{ inputs.environment }}
