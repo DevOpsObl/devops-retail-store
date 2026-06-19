@@ -5,7 +5,7 @@ on:
 
 jobs:
   security_analysis:
-    name: Analisis de seguridad
+    name: Security Analysis
     runs-on: ubuntu-latest
     steps:
       - name: Run security analysis

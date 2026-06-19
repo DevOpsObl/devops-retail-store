@@ -29,16 +29,22 @@ jobs:
       matrix:
         service:
           - name: Catalog
+            tag_name: catalog
             path: src/catalog
           - name: Orders
+            tag_name: orders
             path: src/orders
           - name: Checkout
+            tag_name: checkout
             path: src/checkout
           - name: UI
+            tag_name: ui
             path: src/ui
           - name: Admin
+            tag_name: admin
             path: src/admin
           - name: Cart
+            tag_name: cart
             path: src/cart
     env:
       AWS_REGION: ${{ inputs.aws-region }}
@@ -62,6 +68,6 @@ jobs:
 
       - name: Build y push a ECR
         run: |
-          image_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.name }}:${IMAGE_TAG}"
+          image_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.tag_name }}:${IMAGE_TAG}"
           docker build --tag "$image_uri" ${{ matrix.service.path }}
           docker push "$image_uri"
