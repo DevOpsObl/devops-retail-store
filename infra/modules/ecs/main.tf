@@ -130,6 +130,8 @@ resource "terraform_data" "database_init" {
   }
 
   provisioner "local-exec" {
+    interpreter = ["/bin/bash", "-c"]
+
     command = <<-BASH
       set -euo pipefail
 
