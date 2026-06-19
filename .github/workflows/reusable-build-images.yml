@@ -9,23 +9,23 @@ on:
 
 jobs:
   build_images:
-    name: Build imagen Docker - ${{ matrix.service.name }}
+    name: "${{ matrix.service.name }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         service:
-          - name: catalog
+          - name: Catalog
             path: src/catalog
-          - name: orders
+          - name: Orders
             path: src/orders
-          - name: checkout
+          - name: Checkout
             path: src/checkout
-          - name: ui
+          - name: UI
             path: src/ui
-          - name: admin
+          - name: Admin
             path: src/admin
-          - name: cart
+          - name: Cart
             path: src/cart
     steps:
       - name: Checkout

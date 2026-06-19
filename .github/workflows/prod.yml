@@ -25,7 +25,7 @@ jobs:
       image-tag: ${{ github.sha }}
 
   automated_tests:
-    name: Test
+    name: Tests
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
@@ -76,7 +76,7 @@ jobs:
           # curl --fail "${{ vars.TEST_BASE_URL }}/health"
 
   deploy_prod:
-    name: Despliegue Prod
+    name: Deploy Prod
     needs: gate_test_to_prod
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml

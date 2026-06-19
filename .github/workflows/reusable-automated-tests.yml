@@ -5,7 +5,7 @@ on:
 
 jobs:
   automated_tests:
-    name: Ejecucion de pruebas automatizadas
+    name: Automatic Tests
     runs-on: ubuntu-latest
     steps:
       - name: Run automated tests

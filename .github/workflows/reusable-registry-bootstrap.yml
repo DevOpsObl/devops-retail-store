@@ -23,7 +23,7 @@ on:
 
 jobs:
   bootstrap_registry:
-    name: Registry Bootstrap - ${{ inputs.environment }}
+    name: ${{ inputs.environment }}
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ inputs.aws-region }}

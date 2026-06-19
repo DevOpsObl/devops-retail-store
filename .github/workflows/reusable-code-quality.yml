@@ -5,7 +5,7 @@ on:
 
 jobs:
   code_quality:
-    name: Analisis de calidad de codigo
+    name: Quality Tests
     runs-on: ubuntu-latest
     steps:
       - name: Run code quality analysis

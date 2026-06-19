@@ -25,7 +25,7 @@ jobs:
       image-tag: ${{ github.sha }}
 
   automated_tests:
-    name: Test
+    name: Tests
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
@@ -63,7 +63,7 @@ jobs:
     secrets: inherit
 
   deploy_dev:
-    name: Despliegue Dev
+    name: Deploy Dev
     needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
