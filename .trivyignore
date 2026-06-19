@@ -2,6 +2,3 @@
 # Imposible to fix, look at DevSecOps.md
 CVE-2026-48818
 CVE-2026-54283
-# CVE-2026-33671 - picomatch ReDoS
-# Fixed via overrides in package.json (4.0.4 installed)
-CVE-2026-33671
