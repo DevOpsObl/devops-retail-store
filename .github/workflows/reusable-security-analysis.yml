@@ -50,10 +50,11 @@ jobs:
           trivyignores: "${{ matrix.service.path }}/.trivyignore"
 
       - name: Run Gitleaks
-        uses: gacts/gitleaks@v1
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          report-format: sarif
-          report-path: gitleaks-report.sarif
+          args: detect --report-format sarif --report-path gitleaks-report.sarif
 
       - name: Upload Gitleaks SARIF
         uses: github/codeql-action/upload-sarif@v4
