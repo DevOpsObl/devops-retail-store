@@ -41,12 +41,13 @@ jobs:
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: "fs"
-          scan-ref: "."
+          scan-ref: "${{ matrix.service.path }}"
           format: "table"
           skip-dirs: node_modules,dist,build,coverage
           severity: "CRITICAL,HIGH"
           exit-code: "1"
           ignore-unfixed: true
+          trivyignores: "${{ matrix.service.path }}/.trivyignore"
 
       - name: Run Gitleaks
         uses: gacts/gitleaks@v1
@@ -55,7 +56,7 @@ jobs:
           report-path: gitleaks-report.sarif
 
       - name: Upload Gitleaks SARIF
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: gitleaks-report.sarif
