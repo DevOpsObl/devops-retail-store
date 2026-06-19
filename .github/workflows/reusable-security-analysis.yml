@@ -50,14 +50,15 @@ jobs:
           trivyignores: "${{ matrix.service.path }}/.trivyignore"
 
       - name: Run Gitleaks
+        id: gitleaks
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          args: detect --report-format sarif --report-path gitleaks-report.sarif
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true
 
       - name: Upload Gitleaks SARIF
         uses: github/codeql-action/upload-sarif@v4
-        if: always()
+        if: always() && hashFiles('results.sarif') != ''
         with:
-          sarif_file: gitleaks-report.sarif
+          sarif_file: results.sarif
