@@ -33,13 +33,13 @@ jobs:
     needs: automated_tests
     uses: ./.github/workflows/reusable-security-analysis.yml
 
-  publish_images:
   build_images:
     name: Build
     uses: ./.github/workflows/reusable-build-images.yml
     with:
       image-tag: ${{ github.sha }}
 
+  publish_images:
     name: Publish
     if: github.event_name != 'pull_request'
     needs:
