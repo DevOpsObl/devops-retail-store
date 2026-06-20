@@ -40,7 +40,9 @@ jobs:
       - name: Build Docker image
         id: image
         run: |
-          image_tag="retail-${{ matrix.service.name }}:${{ inputs.image-tag }}"
+          service_name_lower="${{ matrix.service.name }}"
+          service_name_lower="${service_name_lower,,}"
+          image_tag="retail-${service_name_lower}:${{ inputs.image-tag }}"
           echo "uri=${image_tag}" >> "$GITHUB_OUTPUT"
           docker build --tag "$image_tag" ${{ matrix.service.path }}
 
