@@ -1,11 +1,11 @@
-name: Reusable - Ejecucion de pruebas automatizadas
+name: Ejecucion de pruebas automatizadas
 
 on:
   workflow_call:
 
 jobs:
   automated_tests:
-    name: Ejecucion de pruebas automatizadas
+    name: Automatic Tests
     runs-on: ubuntu-latest
     steps:
       - name: Run automated tests

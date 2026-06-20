@@ -1,4 +1,4 @@
-name: Reusable - Build de imagenes Docker
+name: Build de imagenes Docker
 
 on:
   workflow_call:
@@ -9,30 +9,36 @@ on:
 
 jobs:
   build_images:
-    name: Build imagen Docker - ${{ matrix.service.name }}
+    name: "${{ matrix.service.name }}"
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         service:
-          - name: catalog
+          - name: Catalog
+            tag_name: catalog
             path: src/catalog
-          - name: orders
+          - name: Orders
+            tag_name: orders
             path: src/orders
-          - name: checkout
+          - name: Checkout
+            tag_name: checkout
             path: src/checkout
-          - name: ui
+          - name: UI
+            tag_name: ui
             path: src/ui
-          - name: admin
+          - name: Admin
+            tag_name: admin
             path: src/admin
-          - name: cart
+          - name: Cart
+            tag_name: cart
             path: src/cart
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build Docker image
         run: |
           docker build \
-            --tag retail-${{ matrix.service.name }}:${{ inputs.image-tag }} \
+            --tag retail-${{ matrix.service.tag_name }}:${{ inputs.image-tag }} \
             ${{ matrix.service.path }}

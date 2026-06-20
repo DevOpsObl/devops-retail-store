@@ -25,7 +25,7 @@ output "private_subnet_ids" {
 # Repositorios donde se deben publicar las imagenes Docker.
 output "ecr_repository_urls" {
   description = "URLs de ECR para publicar las imagenes Docker."
-  value       = module.ecr.repository_urls
+  value       = local.ecr_repository_urls
 }
 
 # Nombre del cluster ECS Fargate.

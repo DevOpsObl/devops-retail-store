@@ -49,6 +49,28 @@ variable "services" {
   }))
 }
 
+variable "database_init" {
+  description = "Configuracion opcional para inicializar bases PostgreSQL antes de crear servicios ECS."
+  type = object({
+    enabled                    = bool
+    host                       = string
+    port                       = string
+    username                   = string
+    initial_database           = string
+    password_secret_value_from = string
+    databases                  = list(string)
+  })
+  default = {
+    enabled                    = false
+    host                       = ""
+    port                       = "5432"
+    username                   = ""
+    initial_database           = "postgres"
+    password_secret_value_from = ""
+    databases                  = []
+  }
+}
+
 variable "tags" {
   description = "Tags comunes."
   type        = map(string)

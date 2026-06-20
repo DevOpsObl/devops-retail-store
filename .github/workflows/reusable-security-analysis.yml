@@ -1,11 +1,11 @@
-name: Reusable - Analisis de seguridad
+name: Analisis de seguridad
 
 on:
   workflow_call:
 
 jobs:
   security_analysis:
-    name: Analisis de seguridad
+    name: Security Analysis
     runs-on: ubuntu-latest
     steps:
       - name: Run security analysis

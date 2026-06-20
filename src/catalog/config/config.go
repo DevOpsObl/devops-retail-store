@@ -13,5 +13,6 @@ type DatabaseConfiguration struct {
 	Name           string `env:"RETAIL_CATALOG_PERSISTENCE_DB_NAME,default=catalogdb"`
 	User           string `env:"RETAIL_CATALOG_PERSISTENCE_USER,default=catalog_user"`
 	Password       string `env:"RETAIL_CATALOG_PERSISTENCE_PASSWORD"`
+	SSLMode        string `env:"RETAIL_CATALOG_PERSISTENCE_SSL_MODE,default=disable"`
 	ConnectTimeout int    `env:"RETAIL_CATALOG_PERSISTENCE_CONNECT_TIMEOUT,default=5"`
 }
