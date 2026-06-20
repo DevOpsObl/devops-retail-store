@@ -6,6 +6,12 @@ services:
       POSTGRES_USER: retail_user
       POSTGRES_PASSWORD: retailpassword
       POSTGRES_DB: orders
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U retail_user -d orders"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
@@ -28,7 +34,8 @@ services:
       RETAIL_CATALOG_PERSISTENCE_USER: retail_user
       RETAIL_CATALOG_PERSISTENCE_PASSWORD: retailpassword
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   carts:
     build:
@@ -42,7 +49,8 @@ services:
       CART_POSTGRES_PASSWORD: retailpassword
       PORT: "8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   orders:
     build:
@@ -54,7 +62,8 @@ services:
       RETAIL_ORDERS_PERSISTENCE_USERNAME: retail_user
       RETAIL_ORDERS_PERSISTENCE_PASSWORD: retailpassword
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   checkout:
     build:
@@ -97,7 +106,8 @@ services:
     ports:
       - "8081:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
 volumes:
   db-data:

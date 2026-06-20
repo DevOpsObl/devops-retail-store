@@ -449,8 +449,9 @@ tests/
 └── postman/
     ├── retailstore-integration.postman_collection.json
     └── environments/
+        ├── local.postman_environment.json
         ├── dev.postman_environment.json
-        ├── test.postman_environment.json
+        ├── test.postman_environment
         └── prod.postman_environment.json
 
 reports/

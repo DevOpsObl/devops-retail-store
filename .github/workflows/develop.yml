@@ -34,16 +34,26 @@ jobs:
       image-tag: ${{ github.sha }}
 
   automated_tests:
-    name: Test
+    name: Tests
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
-  publish_images:
-    name: Publish
+  registry_bootstrap:
+    name: Registry Bootstrap
     if: github.event_name != 'pull_request'
     needs:
       - code_quality
       - security_analysis
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: dev
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: registry_bootstrap
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
@@ -52,7 +62,7 @@ jobs:
     secrets: inherit
 
   deploy_dev:
-    name: Despliegue Dev
+    name: Deploy Dev
     needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml

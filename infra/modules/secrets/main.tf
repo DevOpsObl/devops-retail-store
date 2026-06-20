@@ -20,8 +20,9 @@ resource "random_password" "admin_jwt" {
 
 # Contenedor logico del secreto en AWS Secrets Manager.
 resource "aws_secretsmanager_secret" "app" {
-  name        = "${var.name_prefix}/app-secrets"
-  description = "Credenciales para Retail Store"
+  name                    = "${var.name_prefix}/app-secrets"
+  description             = "Credenciales para Retail Store"
+  recovery_window_in_days = 0
 
   tags = var.tags
 }
