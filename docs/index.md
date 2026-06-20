@@ -9,6 +9,7 @@ Documentacion del proyecto obligatorio basada en la aplicacion Retail Store.
 - [Infraestructura cloud objetivo](./infrastructure.md)
 - [Containerizacion](./containerizacion.md)
 - [Testing - Definicion](./testing.md)
+- [Calidad de codigo](./calidad.md)
 
 ## Referencias rapidas
 
