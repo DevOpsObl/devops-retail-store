@@ -1,4 +1,4 @@
-name: Deploy ECS
+name: Registry Bootstrap
 
 on:
   workflow_call:
@@ -6,13 +6,7 @@ on:
       environment:
         required: true
         type: string
-      github-environment:
-        required: true
-        type: string
       aws-region:
-        required: true
-        type: string
-      image-tag:
         required: true
         type: string
       terraform-version:
@@ -28,15 +22,12 @@ on:
         required: false
 
 jobs:
-  deploy:
+  bootstrap_registry:
     name: ${{ inputs.environment }}
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.github-environment }}
     env:
       AWS_REGION: ${{ inputs.aws-region }}
       TF_ENV: ${{ inputs.environment }}
-      IMAGE_TAG: ${{ inputs.image-tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -54,31 +45,21 @@ jobs:
         with:
           terraform_version: ${{ inputs.terraform-version }}
 
-      - name: Terraform init
+      - name: Terraform init registry
         run: |
-          terraform -chdir=infra/environment init \
+          terraform -chdir=infra/registry init \
             -reconfigure \
             -backend-config=backend/${TF_ENV}.hcl
 
-      - name: Terraform plan
-        run: |
-          terraform -chdir=infra/environment plan \
-            -var-file=tfvars/${TF_ENV}.tfvars \
-            -var="image_tag=${IMAGE_TAG}"
+      - name: Terraform validate registry
+        run: terraform -chdir=infra/registry validate
 
-      - name: Terraform apply
+      - name: Terraform plan registry
         run: |
-          terraform -chdir=infra/environment apply -auto-approve \
-            -var-file=tfvars/${TF_ENV}.tfvars \
-            -var="image_tag=${IMAGE_TAG}"
+          terraform -chdir=infra/registry plan \
+            -var-file=tfvars/${TF_ENV}.tfvars
 
-      - name: Publicar URLs desplegadas
+      - name: Terraform apply registry
         run: |
-          alb_dns_name=$(terraform -chdir=infra/environment output -raw alb_dns_name)
-
-          {
-            echo "## URLs desplegadas"
-            echo ""
-            echo "- UI: http://${alb_dns_name}/"
-            echo "- Admin: http://${alb_dns_name}/admin/"
-          } >> "$GITHUB_STEP_SUMMARY"
+          terraform -chdir=infra/registry apply -auto-approve \
+            -var-file=tfvars/${TF_ENV}.tfvars

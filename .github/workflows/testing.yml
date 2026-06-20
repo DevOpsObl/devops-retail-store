@@ -25,7 +25,7 @@ jobs:
       image-tag: ${{ github.sha }}
 
   automated_tests:
-    name: Test
+    name: Tests
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
@@ -39,12 +39,22 @@ jobs:
     needs: automated_tests
     uses: ./.github/workflows/reusable-security-analysis.yml
 
-  publish_images:
-    name: Publish
+  registry_bootstrap:
+    name: Registry Bootstrap
     if: github.event_name != 'pull_request'
     needs:
       - code_quality
       - security_analysis
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: test
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: registry_bootstrap
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
@@ -64,7 +74,7 @@ jobs:
           # TODO: definir umbrales requeridos para promover de Dev a Test.
 
   deploy_test:
-    name: Despliegue Test
+    name: Deploy Test
     needs: gate_dev_to_test
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
