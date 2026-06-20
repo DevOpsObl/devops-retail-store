@@ -5,7 +5,7 @@ on:
 
 jobs:
   code_quality:
-    name: SonarCloud quality gate
+    name: SonarCloud Analysis
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
