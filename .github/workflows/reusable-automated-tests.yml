@@ -2,15 +2,66 @@ name: Ejecucion de pruebas automatizadas
 
 on:
   workflow_call:
+    inputs:
+      postman-collection:
+        description: Ruta de la coleccion Postman a ejecutar.
+        required: false
+        type: string
+        default: tests/postman/retailstore-integration.postman_collection.json
+      postman-environment:
+        description: Ambiente Postman a utilizar desde tests/postman/environments.
+        required: false
+        type: string
+        default: local
+      start-local-stack:
+        description: Levanta docker compose antes de ejecutar las pruebas.
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   automated_tests:
     name: Automatic Tests
     runs-on: ubuntu-latest
     steps:
-      - name: Run automated tests
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Start local services
+        if: inputs.start-local-stack
+        run: docker compose up -d --build
+
+      - name: Wait for application health checks
+        if: inputs.start-local-stack
         run: |
-          echo "TODO: definir como se ejecutaran las pruebas automatizadas."
-          # TODO: agregar pruebas de integracion entre microservicios.
-          # TODO: agregar pruebas de carga y rendimiento.
-          # TODO: publicar reportes de pruebas cuando se elija la herramienta.
+          curl --fail --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/health
+          curl --fail --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8081/health
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Newman
+        run: npm install --global newman
+
+      - name: Run integration tests
+        run: |
+          mkdir -p reports/newman
+
+          newman run "${{ inputs.postman-collection }}" \
+            --environment "tests/postman/environments/${{ inputs.postman-environment }}.postman_environment.json" \
+            --reporters cli,junit \
+            --reporter-junit-export "reports/newman/${{ inputs.postman-environment }}-results.xml"
+
+      - name: Upload Newman report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-${{ inputs.postman-environment }}-test-results
+          path: reports/newman/
+          if-no-files-found: warn
+
+      - name: Stop local services
+        if: always() && inputs.start-local-stack
+        run: docker compose down --volumes

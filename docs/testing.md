@@ -196,22 +196,6 @@ docker compose down
 
 Las pruebas serán incorporadas como una etapa del pipeline de integración continua.
 
-El flujo general será:
-
-```text
-Checkout
-   ↓
-Build
-   ↓
-Construcción de imágenes
-   ↓
-Despliegue del ambiente
-   ↓
-Pruebas con Newman
-   ↓
-Quality gate de pruebas
-```
-
 Ejemplo inicial de ejecución:
 
 ```yaml
