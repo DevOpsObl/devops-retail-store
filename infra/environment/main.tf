@@ -176,6 +176,7 @@ locals {
         DB_HOST               = local.db_host
         DB_PORT               = local.db_port
         DB_USER               = var.db_username
+        PGSSLMODE             = "require"
         APP_SECRET_VERSION_ID = module.secrets.secret_version_id
       }
       secrets = {
