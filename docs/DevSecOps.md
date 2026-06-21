@@ -197,6 +197,106 @@ Después de confirmar que, `picomatch` no existe dentro del container luego de h
 
 ### Componente: Cart
 
-Pese a que se pudo resolver una vulnerabilidad de `starlette` actualizando a la versión `0.49.1`, existen dos más `CVE-2026-48818` y `CVE-2026-54283`, que, son resueltas en la versión `1.3.1`, pero, instalarla, es completamente imposible, ya que, `fastapi`, en su versión más nueva, **NO** acepta ninguna mayor a la `1.0.0`.
+Inicialmente, se actualizó `starlette` a la versión `0.49.1`, lo que permitió resolver una de las vulnerabilidades detectadas. Sin embargo, permanecían los hallazgos `CVE-2026-48818` y `CVE-2026-54283`, cuya corrección requería actualizar la dependencia a la versión `1.3.1`.
 
 ![Starlette](assets/starlette-error-cart.png)
+
+Al utilizar conjuntamente las versiones más recientes de fastapi, starlette y prometheus-fastapi-instrumentator, el servicio comenzó a devolver errores HTTP 500 en todos los endpoints del carrito. El inconveniente se debía a una incompatibilidad entre `fastapi 0.137.x` y el middleware de instrumentación de `Prometheus`, que intentaba acceder al atributo `path` de una ruta interna de tipo `_IncludedRouter`.
+
+![Test](assets/Cart-testing-error.png)
+
+```shell
+□ 03 - Cart
+└ CART-00 - Limpiar carrito de prueba
+  DELETE http://localhost:8080/api/carts/postman-devops-test [500 Internal Server Error, 216B, 22ms]
+  1. Limpieza aceptada
+
+└ CART-01 - Agregar producto
+  POST http://localhost:8080/api/carts/postman-devops-test/items [500 Internal Server Error, 216B, 10ms]
+  2. Status 201
+  3⠄ JSONError in test-script
+
+└ CART-02 - Consultar carrito
+  GET http://localhost:8080/api/carts/postman-devops-test [500 Internal Server Error, 216B, 10ms]
+  4. Status 200
+  5⠄ JSONError in test-script
+
+└ CART-03 - Actualizar cantidad
+  PATCH http://localhost:8080/api/carts/postman-devops-test/items [500 Internal Server Error, 216B, 9ms]
+  6. Status 202
+
+└ CART-04 - Verificar cantidad
+  GET http://localhost:8080/api/carts/postman-devops-test/items/d4edfedb-dbe9-4dd9-aae8-009489394955 [500 Internal Server Error, 216B, 10ms]
+  7. Status 200
+  8. Cantidad 2
+
+└ CART-05 - Eliminar item
+  DELETE http://localhost:8080/api/carts/postman-devops-test/items/d4edfedb-dbe9-4dd9-aae8-009489394955 [500 Internal Server Error, 216B, 10ms]
+  9. Status 202
+
+└ CART-06 - Verificar item eliminado
+  GET http://localhost:8080/api/carts/postman-devops-test/items/d4edfedb-dbe9-4dd9-aae8-009489394955 [500 Internal Server Error, 216B, 10ms]
+ 10. Devuelve 404
+```
+
+Para mantener las correcciones de seguridad sin afectar el funcionamiento del servicio, se fijaron las siguientes versiones compatibles:
+
+```yml
+fastapi==0.136.3
+starlette==1.3.1
+prometheus-fastapi-instrumentator==8.0.0
+```
+
+Esta combinación permitió corregir las vulnerabilidades de starlette, conservar la instrumentación de métricas y restablecer el funcionamiento de los endpoints del componente Cart.
+
+Luego de reconstruir la imagen y ejecutar nuevamente las pruebas de integración con Newman, todos los casos correspondientes al carrito finalizaron correctamente.
+
+![Test-Cart-ok](assets/Cart-testing-fixed.png)
+
+### Vulnerabilidades remanentes del sistema operativo
+
+La imagen final del componente se construye a partir de `python:3.12-slim-bookworm`, basada en Debian 12.14. Luego de actualizar los paquetes disponibles del sistema operativo y reconstruir la imagen sin utilizar caché, Trivy continúa reportando 13 vulnerabilidades de severidad alta o crítica:
+
+```
+Total: 13 (HIGH: 9, CRITICAL: 4)
+```
+
+Estos hallazgos corresponden a paquetes del sistema operativo incluidos de forma transitiva en la imagen base, principalmente `ncurses`, `sqlite3`, `perl` y `zlib`. No corresponden a dependencias Python declaradas directamente por el componente.
+
+Las vulnerabilidades no pudieron corregirse mediante `apt-get upgrade`, debido a que Debian 12 no dispone actualmente de versiones corregidas para esos paquetes en sus repositorios oficiales. Trivy las clasifica con los siguientes estados:
+
+- `affected`: el paquete de Debian 12 continúa afectado y no tiene una versión corregida disponible.
+- `fix_deferred`: la corrección fue aplazada por el mantenedor de la distribución y deberá incorporarse mediante una futura actualización.
+- `will_not_fix`: no se publicará una corrección para esa versión concreta del paquete, normalmente porque el código afectado no se compila, no se distribuye o no resulta aplicable en ese contexto.
+
+La evaluación realizada para cada grupo de vulnerabilidades fue la siguiente:
+
+| Paquete | Vulnerabilidades | Evaluación |
+| --- | --- | --- |
+| `ncurses` | `CVE-2025-69720` | Afecta principalmente a la herramienta de línea de comandos `infocmp`, que no es utilizada por la aplicación. Debian considera el hallazgo de impacto menor para Bookworm y no publicó una actualización de seguridad específica. |
+| `sqlite3` | `CVE-2025-7458`, `CVE-2026-11822`, `CVE-2026-11824` | Debian 12 todavía no dispone de una versión corregida. Las vulnerabilidades requieren ejecutar consultas especialmente construidas o procesar bases SQLite manipuladas. El componente Cart utiliza persistencia en memoria y no procesa archivos SQLite proporcionados por usuarios. |
+| `perl` | `CVE-2026-42496`, `CVE-2026-8376`, `CVE-2026-42497`, `CVE-2026-48962`, `CVE-2026-9538` | Cart es una aplicación Python y no ejecuta código Perl ni procesa archivos TAR, expresiones regulares o patrones de salida controlados por usuarios mediante Perl. Además, `CVE-2026-8376` afecta específicamente a compilaciones de 32 bits, mientras que la imagen utilizada se ejecuta sobre arquitectura `x86_64`. |
+| `zlib` | `CVE-2023-45853` | El código vulnerable pertenece a MiniZip. Debian indica que dicho componente no es compilado ni distribuido dentro del paquete binario de `zlib` utilizado por Bookworm, por lo que el hallazgo no resulta explotable en esta imagen. |
+
+### Decisión y aceptación del riesgo
+
+Se decidió mantener temporalmente la imagen basada en `Debian 12` debido a que:
+
+1. Se instalaron todas las actualizaciones disponibles en los repositorios oficiales de la distribución.
+2. No existe una versión corregida instalable para `Debian 12` en los hallazgos remanentes.
+3. Los componentes afectados no son utilizados directamente por el servicio `Cart` o requieren condiciones que no se presentan en su funcionamiento actual.
+4. El contenedor se ejecuta con un usuario no root y contiene únicamente las dependencias necesarias para ejecutar la aplicación.
+5. Instalar manualmente paquetes provenientes de Debian Testing, Unstable u otra distribución podría introducir incompatibilidades, afectar la estabilidad del servicio y reducir la reproducibilidad de la imagen.
+6. La migración inmediata a otra imagen base podría generar retrasos en la entrega, por lo que cualquier cambio de distribución deberá validarse mas adelante.
+
+Estas vulnerabilidades se registran como excepciones `temporales` y `justificadas`, no como hallazgos ignorados. Los resultados permanecerán visibles en los reportes de seguridad y deberán revisarse.
+
+Como medidas de seguimiento se definió:
+
+- Reconstruir regularmente la imagen utilizando la versión más reciente de `python:3.12-slim-bookworm`.
+- Ejecutar `apt-get update` y `apt-get upgrade` durante la construcción.
+- Repetir el análisis de `Trivy` en cada ejecución del pipeline.
+- Eliminar las excepciones cuando `Debian` publique paquetes corregidos.
+- Evaluar una migración controlada hacia una imagen base más reciente cuando sea compatible con la aplicación y supere correctamente las pruebas automatizadas.
+
+Por lo tanto, el riesgo residual se acepta de manera temporal, documentada y controlada, debido a la inexistencia de una remediación aplicable en los repositorios oficiales de `Debian 12` y a la baja exposición efectiva de los componentes vulnerables dentro del servicio.
