@@ -32,27 +32,27 @@ locals {
       health_path   = "/health"
     }
     admin = {
-      path_patterns = ["/admin/*", "/auth/*"]
+      path_patterns = ["/admin", "/admin/*", "/auth", "/auth/*"]
       priority      = 100
       health_path   = "/health"
     }
     catalog = {
-      path_patterns = ["/catalog/*"]
+      path_patterns = ["/catalog", "/catalog/*"]
       priority      = 110
       health_path   = "/health"
     }
     cart = {
-      path_patterns = ["/carts/*"]
+      path_patterns = ["/carts", "/carts/*"]
       priority      = 120
       health_path   = "/health"
     }
     checkout = {
-      path_patterns = ["/checkout/*"]
+      path_patterns = ["/checkout", "/checkout/*"]
       priority      = 130
       health_path   = "/health"
     }
     orders = {
-      path_patterns = ["/orders/*"]
+      path_patterns = ["/orders", "/orders/*"]
       priority      = 140
       health_path   = "/health"
     }
