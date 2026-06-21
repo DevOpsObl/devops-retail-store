@@ -68,6 +68,15 @@ variable "db_username" {
   default     = "retail_user"
 }
 
+# Password del panel admin. Si no se proporciona, Terraform genera una aleatoria.
+variable "admin_password" {
+  description = "Password del usuario administrador del panel. Si es null o vacia, se genera automaticamente."
+  type        = string
+  default     = null
+  sensitive   = true
+  nullable    = true
+}
+
 # Tamano de instancia RDS usado por PostgreSQL.
 variable "db_instance_class" {
   description = "Clase de instancia RDS."

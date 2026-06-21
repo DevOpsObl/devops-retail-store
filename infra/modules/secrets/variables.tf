@@ -15,6 +15,14 @@ variable "admin_username" {
   default     = "admin"
 }
 
+variable "admin_password" {
+  description = "Password inicial del panel admin. Si es null o vacia, se genera automaticamente."
+  type        = string
+  default     = null
+  sensitive   = true
+  nullable    = true
+}
+
 variable "tags" {
   description = "Tags comunes."
   type        = map(string)

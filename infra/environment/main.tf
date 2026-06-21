@@ -87,6 +87,7 @@ module "secrets" {
   name_prefix    = local.name_prefix
   db_username    = var.db_username
   admin_username = "admin"
+  admin_password = var.admin_password
   tags           = local.common_tags
 }
 
@@ -171,10 +172,11 @@ locals {
       port          = 8080
       public        = true
       environment = {
-        PORT    = "8080"
-        DB_HOST = local.db_host
-        DB_PORT = local.db_port
-        DB_USER = var.db_username
+        PORT                  = "8080"
+        DB_HOST               = local.db_host
+        DB_PORT               = local.db_port
+        DB_USER               = var.db_username
+        APP_SECRET_VERSION_ID = module.secrets.secret_version_id
       }
       secrets = {
         DB_PASSWORD      = "${local.secret_arn}:db_password::"
