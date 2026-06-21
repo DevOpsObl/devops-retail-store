@@ -66,6 +66,13 @@ make plan ENV=dev
 make apply ENV=dev
 ```
 
+Por defecto `make plan` y `make apply` despliegan el tag `latest`. Para desplegar una imagen especifica, pasar `IMAGE_TAG`:
+
+```bash
+make plan ENV=dev IMAGE_TAG=<sha-publicado>
+make apply ENV=dev IMAGE_TAG=<sha-publicado>
+```
+
 Para `test` o `prod`, cambiar solo `ENV`:
 
 ```bash
@@ -76,7 +83,7 @@ make init ENV=prod
 make plan ENV=prod
 ```
 
-Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. ECS espera encontrar el tag definido en `image_tag`, por defecto `latest`.
+Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. El pipeline publica cada imagen con el SHA del commit y tambien con `latest`; ECS despliega el tag definido en `image_tag`, por defecto `latest`.
 
 ## Password del panel admin
 
