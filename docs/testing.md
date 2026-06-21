@@ -1,15 +1,15 @@
-# Testing y calidad
+# Testing
 
-Este documento describe la estrategia de testing y análisis de calidad aplicada al proyecto **DevOps Retail Store**.
+Este documento describe la estrategia de testing aplicada al proyecto **DevOps Retail Store**.
 
 La solución busca validar automáticamente el comportamiento de los principales microservicios antes de promover una versión entre los ambientes **Dev**, **Test** y **Prod**.
 
 > Estado del documento: en elaboración.
-> Las secciones de resultados, hallazgos, correcciones y evidencias se completarán luego de ejecutar las pruebas y los análisis sobre el proyecto.
+> Las secciones de resultados, hallazgos, correcciones y evidencias se completarán luego de ejecutar las pruebas sobre el proyecto.
 
 ## 1. Objetivo
 
-El objetivo de la estrategia de testing y calidad es detectar errores funcionales, problemas de integración y defectos de código antes de desplegar una versión de Retail Store en el siguiente ambiente.
+El objetivo de la estrategia de testing es detectar errores funcionales y problemas de integración antes de desplegar una versión de Retail Store en el siguiente ambiente.
 
 Las validaciones serán ejecutadas automáticamente desde el pipeline de integración continua y funcionarán como controles obligatorios para la promoción de artefactos.
 
@@ -18,7 +18,6 @@ Los objetivos específicos son:
 * Validar que los principales microservicios estén disponibles.
 * Verificar el funcionamiento de los endpoints críticos.
 * Comprobar la integración entre catálogo, carrito, checkout y órdenes.
-* Detectar errores y problemas de mantenibilidad mediante análisis estático.
 * Evitar que una versión con pruebas fallidas sea promovida.
 * Generar evidencias reproducibles de las validaciones realizadas.
 
@@ -60,19 +59,6 @@ Su integración con el pipeline permitirá:
 * Generar reportes en consola.
 * Exportar resultados.
 * Conservar los reportes como evidencia del pipeline.
-
-### 3.3. SonarCloud
-
-SonarCloud será utilizado como herramienta de análisis estático de código.
-
-El análisis permitirá identificar:
-
-* Bugs potenciales.
-* Code smells.
-* Código duplicado.
-* Problemas de mantenibilidad.
-* Problemas de confiabilidad.
-* Problemas de seguridad detectados durante el análisis estático.
 
 ## 4. Casos de prueba
 
@@ -217,15 +203,13 @@ Checkout
    ↓
 Build
    ↓
-Análisis estático
-   ↓
 Construcción de imágenes
    ↓
 Despliegue del ambiente
    ↓
 Pruebas con Newman
    ↓
-Quality gate
+Quality gate de pruebas
 ```
 
 Ejemplo inicial de ejecución:
@@ -267,11 +251,7 @@ El uso de `if: always()` permitirá conservar el reporte incluso cuando las prue
 
 Las pruebas de producción evitarán operaciones que generen datos permanentes, salvo que se implemente un mecanismo de limpieza o datos específicos para testing.
 
-## 8. Quality gates
-
-Los quality gates determinarán si una versión puede continuar hacia el siguiente ambiente.
-
-### 8.1. Quality gate de pruebas funcionales
+## 8. Quality gate de pruebas funcionales
 
 El pipeline será bloqueado cuando ocurra alguna de las siguientes condiciones:
 
@@ -288,25 +268,7 @@ El objetivo será obtener:
 100 % de pruebas críticas aprobadas
 ```
 
-### 8.2. Quality gate de análisis estático
-
-El análisis estático deberá cumplir los siguientes criterios sobre código nuevo:
-
-| Métrica                     |      Umbral |
-| --------------------------- | ----------: |
-| Issues Blocker nuevos       |           0 |
-| Issues Critical nuevos      |           0 |
-| Code smells Major nuevos    |    Máximo 5 |
-| Duplicación en código nuevo | Menor a 5 % |
-| Quality Gate de SonarCloud  |    Aprobado |
-
-La cobertura mínima se incorporará como criterio cuando los microservicios generen reportes de cobertura compatibles con SonarCloud.
-
-No se definirá inicialmente un porcentaje de cobertura sin contar con una medición real y reproducible.
-
-### 8.3. Promoción entre ambientes
-
-Una versión no podrá promoverse cuando alguno de los quality gates se encuentre fallando.
+## 9. Promoción entre ambientes
 
 El flujo esperado será:
 
@@ -317,19 +279,18 @@ feature/* → develop → testing → main
 La promoción hacia `testing` requerirá:
 
 * Build correcto.
-* Análisis estático aprobado.
-* Controles de seguridad aprobados.
 * Despliegue correcto en Dev.
 * Pruebas funcionales aprobadas.
 
 La promoción hacia `main` requerirá:
 
 * Suite de integración aprobada en Test.
-* Quality gates aprobados.
 * Pull Request aprobado por otro integrante.
 * Ausencia de errores bloqueantes conocidos.
 
-## 9. Resultados obtenidos
+Los criterios de análisis estático y calidad de código se documentan por separado en [Calidad de código](./calidad.md).
+
+## 10. Resultados obtenidos
 
 Esta sección se completará luego de ejecutar las pruebas.
 
@@ -339,19 +300,9 @@ Esta sección se completará luego de ejecutar las pruebas.
 | Pendiente | Test     |          Pendiente | Pendiente | Pendiente | Pendiente |
 | Pendiente | Prod     |          Pendiente | Pendiente | Pendiente | Pendiente |
 
-También se registrarán los resultados del análisis estático:
+## 11. Hallazgos significativos
 
-| Métrica                     | Resultado |      Umbral | Cumple    |
-| --------------------------- | --------: | ----------: | --------- |
-| Issues Blocker nuevos       | Pendiente |           0 | Pendiente |
-| Issues Critical nuevos      | Pendiente |           0 | Pendiente |
-| Code smells Major nuevos    | Pendiente |    Máximo 5 | Pendiente |
-| Duplicación en código nuevo | Pendiente | Menor a 5 % | Pendiente |
-| Quality Gate                | Pendiente |    Aprobado | Pendiente |
-
-## 10. Hallazgos significativos
-
-Esta sección se completará con los problemas reales encontrados durante las pruebas y el análisis.
+Esta sección se completará con los problemas reales encontrados durante las pruebas.
 
 Cada hallazgo deberá registrar:
 
@@ -367,7 +318,7 @@ Cada hallazgo deberá registrar:
 | --------- | ----------------------- | --------- | --------- | --------- |
 | Pendiente | Pendiente de ejecución. | Pendiente | Pendiente | Pendiente |
 
-## 11. Remediaciones aplicadas
+## 12. Remediaciones aplicadas
 
 Las correcciones realizadas se documentarán indicando el hallazgo asociado y la evidencia de su validación.
 
@@ -375,22 +326,11 @@ Las correcciones realizadas se documentarán indicando el hallazgo asociado y la
 | --------- | ----------------------- | --------------------- | --------- |
 | Pendiente | Pendiente de ejecución. | Pendiente             | Pendiente |
 
-Cuando un hallazgo no pueda corregirse dentro del alcance del proyecto, deberá documentarse como excepción justificada.
-
-La excepción deberá incluir:
-
-* Motivo.
-* Riesgo aceptado.
-* Impacto.
-* Medida de mitigación.
-* Responsable de la decisión.
-
-## 12. Recomendaciones de mejora
+## 13. Recomendaciones de mejora
 
 Las recomendaciones iniciales son:
 
 * Incorporar pruebas unitarias propias de cada microservicio.
-* Generar reportes de cobertura para todos los lenguajes utilizados.
 * Incorporar un ambiente de datos exclusivo para testing.
 * Automatizar la creación y eliminación de datos de prueba.
 * Ampliar las pruebas negativas y de validación.
@@ -402,7 +342,7 @@ Las recomendaciones iniciales son:
 
 Estas recomendaciones podrán ajustarse según los resultados obtenidos.
 
-## 13. Evidencias y capturas
+## 14. Evidencias y capturas
 
 Las evidencias se almacenarán dentro del repositorio.
 
@@ -410,13 +350,12 @@ Estructura propuesta:
 
 ```text
 docs/
-├── testing-y-calidad.md
+├── testing.md
 └── assets/
     └── testing/
         ├── newman-dev.png
         ├── newman-test.png
         ├── github-actions-testing.png
-        ├── sonar-quality-gate.png
         └── hallazgos/
 ```
 
@@ -426,9 +365,8 @@ Se deberán incluir como mínimo:
 2. Resultado de las pruebas en Dev.
 3. Resultado de las pruebas en Test.
 4. Etapa de testing dentro de GitHub Actions.
-5. Quality Gate de SonarCloud.
-6. Ejemplo de pipeline bloqueado ante una prueba fallida.
-7. Evidencia de una remediación aplicada.
+5. Ejemplo de pipeline bloqueado ante una prueba fallida.
+6. Evidencia de una remediación aplicada.
 
 Las imágenes se agregarán al documento una vez obtenidas:
 
@@ -436,8 +374,6 @@ Las imágenes se agregarán al documento una vez obtenidas:
 ![Resultado de Newman en Dev](assets/testing/newman-dev.png)
 
 ![Ejecución de testing en GitHub Actions](assets/testing/github-actions-testing.png)
-
-![Quality Gate de SonarCloud](assets/testing/sonar-quality-gate.png)
 ```
 
 ## Estructura de archivos
@@ -458,7 +394,7 @@ reports/
 └── newman/
 
 docs/
-├── testing-y-calidad.md
+├── testing.md
 └── assets/
     └── testing/
 ```
