@@ -3,8 +3,8 @@ FROM node:22-alpine AS deps
 WORKDIR /app
 # COPY . .
 # Copiamos solo package.json y package-lock.json.
-COPY package*.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci
 
 # Build stage
 FROM node:22-alpine AS build
@@ -25,10 +25,10 @@ ENV PORT=8080
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copiamos package.json y package-lock.json para instalar solo dependencias productivas.
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
 # Instala únicamente las dependencias necesarias para ejecutar la app, no agrega dependencias de desarrollo.
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 
 # Copiamos solamente el resultado compilado desde la etapa build.
 # No copiamos todo el código fuente ni otros archivos.

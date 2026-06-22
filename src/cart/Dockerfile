@@ -1,8 +1,12 @@
 # Multi-stage build
 # Dependency stage
-FROM python:3.12-slim AS deps
+FROM python:3.12-slim-bookworm AS deps
 
 WORKDIR /app
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 
@@ -11,7 +15,7 @@ RUN python -m venv /opt/venv && \
     /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.12-slim AS runtime
+FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
 
@@ -21,6 +25,11 @@ ENV PORT=8080
 # Activamos el entorno virtual en el PATH para este stage.
 # Esto hace que 'python' y 'uvicorn' apunten automáticamente al venv.
 ENV PATH="/opt/venv/bin:${PATH}"
+
+# Actualizamos los paquetes del sistema y creamos un usuario no-root.
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    rm -rf /var/lib/apt/lists/*
 
 # Creamos un usuario no-root por seguridad.
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
