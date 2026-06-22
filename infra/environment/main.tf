@@ -32,27 +32,27 @@ locals {
       health_path   = "/health"
     }
     admin = {
-      path_patterns = ["/admin/*", "/auth/*"]
+      path_patterns = ["/admin", "/admin/*", "/auth", "/auth/*"]
       priority      = 100
       health_path   = "/health"
     }
     catalog = {
-      path_patterns = ["/catalog/*"]
+      path_patterns = ["/catalog", "/catalog/*"]
       priority      = 110
       health_path   = "/health"
     }
     cart = {
-      path_patterns = ["/carts/*"]
+      path_patterns = ["/carts", "/carts/*"]
       priority      = 120
       health_path   = "/health"
     }
     checkout = {
-      path_patterns = ["/checkout/*"]
+      path_patterns = ["/checkout", "/checkout/*"]
       priority      = 130
       health_path   = "/health"
     }
     orders = {
-      path_patterns = ["/orders/*"]
+      path_patterns = ["/orders", "/orders/*"]
       priority      = 140
       health_path   = "/health"
     }
@@ -87,6 +87,7 @@ module "secrets" {
   name_prefix    = local.name_prefix
   db_username    = var.db_username
   admin_username = "admin"
+  admin_password = var.admin_password
   tags           = local.common_tags
 }
 
@@ -171,10 +172,12 @@ locals {
       port          = 8080
       public        = true
       environment = {
-        PORT    = "8080"
-        DB_HOST = local.db_host
-        DB_PORT = local.db_port
-        DB_USER = var.db_username
+        PORT                  = "8080"
+        DB_HOST               = local.db_host
+        DB_PORT               = local.db_port
+        DB_USER               = var.db_username
+        PGSSLMODE             = "require"
+        APP_SECRET_VERSION_ID = module.secrets.secret_version_id
       }
       secrets = {
         DB_PASSWORD      = "${local.secret_arn}:db_password::"

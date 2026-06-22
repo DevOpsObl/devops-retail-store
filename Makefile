@@ -1,4 +1,5 @@
 ENV ?= dev
+IMAGE_TAG ?= latest
 
 INFRA_DIR := infra
 TF_DIR := $(INFRA_DIR)/environment
@@ -32,10 +33,10 @@ init:
 	cd $(TF_DIR) && terraform init -reconfigure -backend-config=backend/$(ENV).hcl
 
 plan:
-	cd $(TF_DIR) && terraform plan -var-file=tfvars/$(ENV).tfvars
+	cd $(TF_DIR) && terraform plan -var-file=tfvars/$(ENV).tfvars -var="image_tag=$(IMAGE_TAG)"
 
 apply:
-	cd $(TF_DIR) && terraform apply -var-file=tfvars/$(ENV).tfvars
+	cd $(TF_DIR) && terraform apply -var-file=tfvars/$(ENV).tfvars -var="image_tag=$(IMAGE_TAG)"
 
 validate:
 	cd $(TF_DIR) && terraform validate

@@ -4,6 +4,11 @@ output "secret_arn" {
   value       = aws_secretsmanager_secret.app.arn
 }
 
+output "secret_version_id" {
+  description = "Version actual del secreto de aplicacion."
+  value       = nonsensitive(aws_secretsmanager_secret_version.app.version_id)
+}
+
 output "db_password" {
   description = "Password generado para PostgreSQL."
   value       = random_password.db.result

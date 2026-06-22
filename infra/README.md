@@ -66,6 +66,13 @@ make plan ENV=dev
 make apply ENV=dev
 ```
 
+Por defecto `make plan` y `make apply` despliegan el tag `latest`. Para desplegar una imagen especifica, pasar `IMAGE_TAG`:
+
+```bash
+make plan ENV=dev IMAGE_TAG=<sha-publicado>
+make apply ENV=dev IMAGE_TAG=<sha-publicado>
+```
+
 Para `test` o `prod`, cambiar solo `ENV`:
 
 ```bash
@@ -76,7 +83,21 @@ make init ENV=prod
 make plan ENV=prod
 ```
 
-Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. ECS espera encontrar el tag definido en `image_tag`, por defecto `latest`.
+Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. El pipeline publica cada imagen con el SHA del commit y tambien con `latest`; ECS despliega el tag definido en `image_tag`, por defecto `latest`.
+
+## Password del panel admin
+
+El servicio `admin` recibe `ADMIN_USERNAME`, `ADMIN_PASSWORD` y `ADMIN_JWT_SECRET` desde AWS Secrets Manager. Por defecto, Terraform genera una password aleatoria para `ADMIN_PASSWORD`.
+
+Para fijar la password desde GitHub Actions sin guardarla en el repositorio, crear un secret de Actions llamado `ADMIN_PASSWORD` en el repositorio o environment correspondiente. El workflow de deploy lo exporta como `TF_VAR_admin_password`, y Terraform lo guarda en Secrets Manager para que ECS lo inyecte en el contenedor.
+
+Si `ADMIN_PASSWORD` no esta definido o llega vacio, Terraform mantiene el comportamiento seguro y genera una password aleatoria.
+
+Para ejecuciones manuales fuera de GitHub Actions se puede pasar el valor con una variable de entorno:
+
+```bash
+TF_VAR_admin_password='admin' make apply ENV=dev
+```
 
 ## Nota sobre PostgreSQL
 

@@ -18,6 +18,10 @@ resource "random_password" "admin_jwt" {
   special = false
 }
 
+locals {
+  admin_password = var.admin_password != null && trimspace(var.admin_password) != "" ? var.admin_password : random_password.admin.result
+}
+
 # Contenedor logico del secreto en AWS Secrets Manager.
 resource "aws_secretsmanager_secret" "app" {
   name                    = "${var.name_prefix}/app-secrets"
@@ -35,7 +39,7 @@ resource "aws_secretsmanager_secret_version" "app" {
     db_username      = var.db_username
     db_password      = random_password.db.result
     admin_username   = var.admin_username
-    admin_password   = random_password.admin.result
+    admin_password   = local.admin_password
     admin_jwt_secret = random_password.admin_jwt.result
   })
 }

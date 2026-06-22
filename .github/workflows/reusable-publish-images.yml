@@ -68,6 +68,11 @@ jobs:
 
       - name: Build y push a ECR
         run: |
-          image_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.tag_name }}:${IMAGE_TAG}"
-          docker build --tag "$image_uri" ${{ matrix.service.path }}
-          docker push "$image_uri"
+          repository_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.tag_name }}"
+          sha_image_uri="${repository_uri}:${IMAGE_TAG}"
+          latest_image_uri="${repository_uri}:latest"
+
+          docker build --tag "$sha_image_uri" ${{ matrix.service.path }}
+          docker tag "$sha_image_uri" "$latest_image_uri"
+          docker push "$sha_image_uri"
+          docker push "$latest_image_uri"
