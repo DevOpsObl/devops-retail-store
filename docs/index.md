@@ -10,6 +10,8 @@ Documentacion del proyecto obligatorio basada en la aplicacion Retail Store.
 - [Containerizacion](./containerizacion.md)
 - [Testing - Definicion](./testing.md)
 - [Calidad de codigo](./calidad.md)
+- [DevSecOps](./DevSecOps.md)
+- [Observabilidad](./observabilidad.md)
 
 ## Referencias rapidas
 
