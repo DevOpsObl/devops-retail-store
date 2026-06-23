@@ -46,6 +46,7 @@ jobs:
     needs:
       - code_quality
       - security_analysis
+      - automated_tests
     uses: ./.github/workflows/reusable-registry-bootstrap.yml
     with:
       environment: dev

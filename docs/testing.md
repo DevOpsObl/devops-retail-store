@@ -34,7 +34,9 @@ La estrategia contempla pruebas funcionales y de integración sobre los siguient
 | `checkout`    | Procesamiento del flujo de checkout.                 |
 | `orders`      | Registro y consulta de órdenes generadas.            |
 
-Las pruebas se ejecutarán mediante solicitudes HTTP hacia los endpoints expuestos por el **Application Load Balancer**.
+La suite automatizada actual se ejecuta contra un stack local levantado por `Docker Compose` dentro del `runner de GitHub Actions`. Usa `local.postman_environment.json` con `baseUrl=http://localhost:8080` y `adminBaseUrl=http://localhost:8081`. 
+
+Las ejecuciones contra ALB por ambiente quedan como mejora pendiente.
 
 Las bases PostgreSQL y Redis no serán probadas directamente. Su funcionamiento se validará indirectamente mediante las operaciones de los microservicios que utilizan persistencia.
 

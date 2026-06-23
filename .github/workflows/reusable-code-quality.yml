@@ -56,7 +56,7 @@ jobs:
 
       - name: Publish SonarCloud summary
         if: always()
-        continue-on-error: true
+        # continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
@@ -155,10 +155,13 @@ jobs:
 
             if [ "$value" = "OK" ]; then
               echo "✅"
+              return 0
             elif [ "$value" = "N/A" ]; then
               echo "⚠️"
+              return 1
             else
               echo "❌"
+              return 1
             fi
           }
 
@@ -185,7 +188,9 @@ jobs:
           CRITICAL_STATUS="$(pass_count_max "$CRITICAL_ISSUES" 0)"
           MAJOR_CODE_SMELLS_STATUS="$(pass_count_max "$MAJOR_CODE_SMELLS" 5)"
           DUPLICATION_STATUS="$(pass_percent_less_than "$NEW_DUPLICATION" 5)"
-          QUALITY_GATE_ICON="$(pass_quality_gate "$QUALITY_GATE_STATUS")"
+          QUALITY_GATE_FAILED=0
+          QUALITY_GATE_ICON="$(pass_quality_gate "$QUALITY_GATE_STATUS")" ||
+            QUALITY_GATE_FAILED=1
 
           {
             echo "## SonarCloud quality analysis"
@@ -208,3 +213,8 @@ jobs:
             echo ""
             echo "[Open SonarCloud dashboard](${SONAR_DASHBOARD_URL})"
           } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$QUALITY_GATE_FAILED" -ne 0 ]; then
+            echo "SonarCloud Quality Gate no aprobado: ${QUALITY_GATE_STATUS}"
+            exit 1
+          fi

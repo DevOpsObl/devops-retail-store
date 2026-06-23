@@ -82,7 +82,7 @@ Un Quality Gate es un conjunto de reglas que determina si una aplicación cumple
 
 #### Trivy
 
-Se utiliza Trivy para evaluar los resultados de los análisis de dependencias e imágenes de contenedor.
+Trivy bloquea vulnerabilidades HIGH/CRITICAL detectadas por el scan, exceptuando hallazgos sin fix aplicable o CVE explícitamente justificados en `.trivyignore`.
 
 #### Criterio definido
 

@@ -23,11 +23,9 @@ Los objetivos específicos son:
 
 El análisis de calidad se aplicará sobre el código de los microservicios y componentes del proyecto.
 
-## 3. Herramienta seleccionada
+## 3. Herramientas seleccionadas
 
-### 3.1. SonarCloud
-
-SonarCloud será utilizado como herramienta de análisis estático de código.
+SonarCloud aporta el análisis general con el gate disponible en el plan gratuito con `Sonar way` y  `Semgrep` aporta el umbral configurable; `Newman`, `Trivy` y `Gitleaks` bloquean sus respectivos riesgos.
 
 El análisis permitirá identificar:
 
@@ -48,20 +46,35 @@ Ejemplo inicial de ejecución:
 - name: Run SonarCloud analysis
   run: sonar-scanner -Dsonar.qualitygate.wait=true
 ```
-
 El uso de `sonar.qualitygate.wait=true` permitirá bloquear el pipeline cuando el quality gate no sea aprobado.
+
+```yaml
+      - name: Run Semgrep
+        run: |
+          semgrep scan \
+            --config=auto \
+            --severity=ERROR \
+            --strict \
+            --error \
+            --exclude=node_modules \
+            --exclude=dist \
+            --exclude=build \
+            --exclude=coverage \
+            --sarif \
+            --output=semgrep-results.sarif \
+            .
+```
 
 ## 5. Quality gate de análisis estático
 
-El análisis estático deberá cumplir los siguientes criterios sobre código nuevo:
-
-| Métrica                     |      Umbral |
-| --------------------------- | ----------: |
-| Issues Blocker nuevos       |           0 |
-| Issues Critical nuevos      |           0 |
-| Code smells Major nuevos    |    Máximo 5 |
-| Duplicación en código nuevo | Menor a 5 % |
-| Quality Gate de SonarCloud  |    Aprobado |
+| Control | Herramienta | Criterio bloqueante |
+|---|---|---|
+| Calidad general | SonarCloud | Quality Gate `Sonar way` aprobado |
+| Análisis estático | Semgrep | Cero hallazgos `ERROR` |
+| Dependencias | Trivy filesystem | Cero HIGH/CRITICAL corregibles |
+| Imágenes | Trivy image | Cero HIGH/CRITICAL no exceptuadas |
+| Secretos | Gitleaks | Cero secretos detectados |
+| Integración funcional | Newman | Todas las pruebas y aserciones aprobadas |
 
 Una versión no podrá promoverse cuando el quality gate de calidad se encuentre fallando.
 
