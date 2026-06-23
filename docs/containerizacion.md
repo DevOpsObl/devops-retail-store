@@ -392,129 +392,322 @@ redis:7-alpine
 
 ---
 
-## Publicación en Docker Hub
+# Publicación en Amazon ECR
 
-Se utilizó Docker Hub como container registry.
+Docker Hub fue utilizado durante una etapa inicial del proyecto. En la implementación actual, las imágenes de los microservicios se almacenan en **Amazon Elastic Container Registry (ECR)** y su publicación se encuentra automatizada mediante **GitHub Actions**.
 
-Usuario utilizado:
+Los repositorios ECR se crean de forma declarativa utilizando Terraform, permitiendo disponer de registros separados para los ambientes:
 
-```txt
-darrioladev1
-```
+- Desarrollo.
+- Testing.
+- Producción.
 
-Se publicaron las siguientes imágenes propias del proyecto:
+La publicación contempla los siguientes microservicios:
 
-| Microservicio | Imagen                                             |
-| ------------- | -------------------------------------------------- |
-| admin         | `darrioladev1/devops-retail-store-admin:v1.0.0`    |
-| carts         | `darrioladev1/devops-retail-store-carts:v1.0.0`    |
-| catalog       | `darrioladev1/devops-retail-store-catalog:v1.0.0`  |
-| checkout      | `darrioladev1/devops-retail-store-checkout:v1.0.0` |
-| orders        | `darrioladev1/devops-retail-store-orders:v1.0.0`   |
-| ui            | `darrioladev1/devops-retail-store-ui:v1.0.0`       |
+| Microservicio | Contexto de construcción | Repositorio ECR |
+| --- | --- | --- |
+| Catalog | `src/catalog` | `catalog` |
+| Orders | `src/orders` | `orders` |
+| Checkout | `src/checkout` | `checkout` |
+| UI | `src/ui` | `ui` |
+| Admin | `src/admin` | `admin` |
+| Cart | `src/cart` | `cart` |
 
-Las imágenes `postgres:16` y `redis:7-alpine` no fueron publicadas por el equipo porque son imágenes oficiales externas utilizadas como dependencias del proyecto.
-
----
-## TODO
-
-## EDITAR ESTO CON LOS COMANDOS DE ECR
-
-## Comandos utilizados para publicar imágenes
-
-Primero se inició sesión en Docker Hub:
-
-```bash
-docker login
-```
-
-Luego se construyeron las imágenes:
-
-```bash
-docker compose build
-```
-
-Se etiquetaron las imágenes locales:
-
-```bash
-docker tag devops-retail-store-admin darrioladev1/devops-retail-store-admin:v1.0.0
-docker tag devops-retail-store-carts darrioladev1/devops-retail-store-carts:v1.0.0
-docker tag devops-retail-store-catalog darrioladev1/devops-retail-store-catalog:v1.0.0
-docker tag devops-retail-store-checkout darrioladev1/devops-retail-store-checkout:v1.0.0
-docker tag devops-retail-store-orders darrioladev1/devops-retail-store-orders:v1.0.0
-docker tag devops-retail-store-ui darrioladev1/devops-retail-store-ui:v1.0.0
-```
-
-Finalmente, se publicaron en Docker Hub:
-
-```bash
-docker push darrioladev1/devops-retail-store-admin:v1.0.0
-docker push darrioladev1/devops-retail-store-carts:v1.0.0
-docker push darrioladev1/devops-retail-store-catalog:v1.0.0
-docker push darrioladev1/devops-retail-store-checkout:v1.0.0
-docker push darrioladev1/devops-retail-store-orders:v1.0.0
-docker push darrioladev1/devops-retail-store-ui:v1.0.0
-```
+En el entorno local, el servicio de carrito puede aparecer identificado como `carts` dentro de Docker Compose. Para el código fuente y Amazon ECR se utiliza el nombre `cart`.
 
 ---
 
-## Parametrización del tag de imágenes
+## Creación de los repositorios ECR
 
-Para evitar dejar la versión hardcodeada en el `docker-compose.yml`, se propone utilizar una variable de entorno:
+La creación de los repositorios se encuentra implementada en el workflow reutilizable:
+
+```
+.github/workflows/reusable-registry-bootstrap.yml
+```
+
+Este workflow configura las credenciales de AWS, inicializa Terraform y aplica la configuración correspondiente al ambiente.
+
+Los comandos ejecutados son equivalentes a:
+
+```bash
+terraform -chdir=infra/registry init \
+  -reconfigure \
+  -backend-config=backend/${TF_ENV}.hcl
+
+terraform -chdir=infra/registry validate
+
+terraform -chdir=infra/registry plan \
+  -var-file=tfvars/${TF_ENV}.tfvars
+
+terraform -chdir=infra/registry apply -auto-approve \
+  -var-file=tfvars/${TF_ENV}.tfvars
+```
+
+La variable `TF_ENV` determina el ambiente sobre el cual se trabaja:
+
+```
+dev
+test
+prod
+```
+
+Cada ambiente utiliza su propio archivo de backend remoto y su correspondiente archivo de variables:
+
+```
+infra/registry/backend/dev.hcl
+infra/registry/backend/test.hcl
+infra/registry/backend/prod.hcl
+```
+
+```
+infra/registry/tfvars/dev.tfvars
+infra/registry/tfvars/test.tfvars
+infra/registry/tfvars/prod.tfvars
+```
+
+Los prefijos utilizados para organizar los repositorios son:
+
+```
+devops-retail-store-dev
+devops-retail-store-test
+devops-retail-store-prod
+```
+
+Por ejemplo, los repositorios del ambiente de desarrollo siguen la siguiente estructura:
+
+```
+devops-retail-store-dev/catalog
+devops-retail-store-dev/orders
+devops-retail-store-dev/checkout
+devops-retail-store-dev/ui
+devops-retail-store-dev/admin
+devops-retail-store-dev/cart
+```
+
+---
+
+## Autenticación con Amazon ECR
+
+El pipeline configura las credenciales de AWS utilizando:
 
 ```yaml
-image: darrioladev1/devops-retail-store-admin:${IMAGE_TAG:-latest}
+aws-actions/configure-aws-credentials@v6
 ```
 
-Ejemplo aplicado a los servicios:
+Luego realiza la autenticación contra Amazon ECR mediante:
 
 ```yaml
-admin:
-  image: darrioladev1/devops-retail-store-admin:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/admin
-
-ui:
-  image: darrioladev1/devops-retail-store-ui:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/ui
-
-carts:
-  image: darrioladev1/devops-retail-store-carts:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/cart
-
-catalog:
-  image: darrioladev1/devops-retail-store-catalog:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/catalog
-
-checkout:
-  image: darrioladev1/devops-retail-store-checkout:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/checkout
-
-orders:
-  image: darrioladev1/devops-retail-store-orders:${IMAGE_TAG:-latest}
-  build:
-    context: ./src/orders
+aws-actions/amazon-ecr-login@v2
 ```
 
-De esta forma, para publicar una versión específica desde PowerShell se puede ejecutar:
+El comando manual equivalente sería:
 
-```powershell
-$env:IMAGE_TAG="v1.0.0"
-docker compose build
-docker compose push
+```bash
+aws ecr get-login-password --region us-east-1 \
+  | docker login \
+      --username AWS \
+      --password-stdin \
+      <account_id>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
-Si no se define `IMAGE_TAG`, Docker Compose utilizará `latest`.
+Las credenciales no se almacenan dentro del repositorio. Son proporcionadas al workflow mediante secretos de GitHub Actions.
+
+---
+
+## Construcción y análisis de las imágenes
+
+La construcción de validación se encuentra implementada en:
+
+```
+.github/workflows/reusable-build-images.yml
+```
+
+El workflow utiliza una estrategia de matriz para construir individualmente las imágenes de los seis microservicios.
+
+Cada imagen temporal se identifica mediante el nombre del servicio y el SHA del commit:
+
+```
+retail-<servicio>:<github_sha>
+```
+
+Por ejemplo:
+
+```
+retail-catalog:8f27c4a...
+retail-cart:8f27c4a...
+```
+
+Después de construir cada imagen, se ejecuta un análisis de vulnerabilidades mediante **Trivy**:
+
+```yaml
+- name: Trivy Image Scan
+  uses: aquasecurity/trivy-action@v0.36.0
+  with:
+    image-ref: "${{ steps.image.outputs.uri }}"
+    severity: HIGH,CRITICAL
+    exit-code: 1
+    trivyignores: ${{ matrix.service.path }}/.trivyignore
+```
+
+La configuración establece los siguientes criterios:
+
+- Se reportan vulnerabilidades `HIGH` y `CRITICAL`.
+- El job falla cuando Trivy encuentra una vulnerabilidad no exceptuada.
+- Cada servicio puede disponer de un archivo `.trivyignore`.
+- Las excepciones deben estar justificadas y documentadas.
+- Una excepción no implica que la vulnerabilidad haya sido eliminada, sino que fue evaluada y aceptada temporalmente.
+
+### Consideración sobre el artefacto publicado
+
+En la implementación actual, el workflow de validación construye y analiza una imagen local. Posteriormente, el workflow de publicación realiza una nueva construcción utilizando el mismo código y el mismo SHA.
+
+Por lo tanto, actualmente no se reutiliza exactamente el mismo artefacto Docker entre las etapas de análisis y publicación.
+
+Como mejora futura, se podría:
+
+- Exportar la imagen construida como artefacto del pipeline.
+- Publicar directamente la imagen previamente analizada.
+- Verificar el digest de la imagen.
+- Ejecutar un análisis adicional sobre la imagen publicada en ECR.
+
+---
+
+## Publicación de imágenes
+
+La publicación se encuentra implementada en:
+
+```
+.github/workflows/reusable-publish-images.yml
+```
+
+Para cada microservicio, el pipeline:
+
+1. Determina la URI del repositorio ECR.
+2. Construye la imagen.
+3. La etiqueta con el SHA del commit.
+4. Agrega el tag complementario `latest`.
+5. Publica ambos tags en Amazon ECR.
+
+Los comandos ejecutados son equivalentes a:
+
+```bash
+repository_uri="${ECR_REGISTRY}/${ECR_REPOSITORY_PREFIX}/${SERVICE}"
+sha_image_uri="${repository_uri}:${IMAGE_TAG}"
+latest_image_uri="${repository_uri}:latest"
+
+docker build --tag "$sha_image_uri" "$SERVICE_PATH"
+docker tag "$sha_image_uri" "$latest_image_uri"
+
+docker push "$sha_image_uri"
+docker push "$latest_image_uri"
+```
+
+Por ejemplo, para el servicio `catalog` en el ambiente de desarrollo se generan imágenes con la siguiente estructura:
+
+```
+<account_id>.dkr.ecr.us-east-1.amazonaws.com/devops-retail-store-dev/catalog:<github_sha>
+<account_id>.dkr.ecr.us-east-1.amazonaws.com/devops-retail-store-dev/catalog:latest
+```
+
+---
+
+## Parametrización y trazabilidad de los tags
+
+Los workflows utilizan el SHA completo del commit como tag principal:
+
+```yaml
+image-tag: ${{ github.sha }}
+```
+
+El mismo valor se utiliza durante:
+
+1. La construcción de validación.
+2. El análisis de vulnerabilidades.
+3. La publicación en Amazon ECR.
+4. El despliegue mediante Terraform.
+
+El uso del SHA permite relacionar una imagen con el commit exacto que originó su construcción.
+
+Además, se publica el tag `latest` como referencia complementaria:
+
+```
+<repositorio>:<github_sha>
+<repositorio>:latest
+```
+
+El tag basado en el SHA es utilizado para los despliegues porque permite una mayor trazabilidad y evita depender de un tag mutable como `latest`.
+
+Docker Compose se mantiene como herramienta para la ejecución y validación local. La publicación en ECR y el despliegue en AWS no dependen de los tags configurados en `docker-compose.yml`.
+
+---
+
+## Despliegue en AWS ECS
+
+Después de publicar las imágenes, el pipeline ejecuta el workflow reutilizable:
+
+```
+.github/workflows/reusable-deploy.yml
+```
+
+Este workflow utiliza Terraform para desplegar la infraestructura y los servicios desde:
+
+```
+infra/environment
+```
+
+La inicialización utiliza un backend remoto diferente para cada ambiente:
+
+```bash
+terraform -chdir=infra/environment init \
+  -reconfigure \
+  -backend-config=backend/${TF_ENV}.hcl
+```
+
+El tag de la imagen se envía explícitamente a Terraform:
+
+```bash
+terraform -chdir=infra/environment plan \
+  -var-file=tfvars/${TF_ENV}.tfvars \
+  -var="image_tag=${IMAGE_TAG}"
+
+terraform -chdir=infra/environment apply -auto-approve \
+  -var-file=tfvars/${TF_ENV}.tfvars \
+  -var="image_tag=${IMAGE_TAG}"
+```
+
+De esta forma, las definiciones de tareas de ECS utilizan las imágenes correspondientes al SHA del commit ejecutado por el pipeline.
+
+Los ambientes de GitHub utilizados para controlar los despliegues son:
+
+| Ambiente | GitHub Environment |
+| --- | --- |
+| Desarrollo | `Develop` |
+| Testing | `Test` |
+| Producción | `Prod` |
+
+Al finalizar el despliegue, el pipeline obtiene el nombre DNS del Application Load Balancer y publica las URLs en el resumen de GitHub Actions:
+
+```
+UI: http://<alb_dns_name>/
+Admin: http://<alb_dns_name>/admin/
+```
+
+---
+
+## Estado de las dependencias del pipeline
+
+En el pipeline, la publicación depende de que hayan finalizado correctamente:
+
+- El análisis de calidad.
+- El análisis de seguridad.
+- La construcción y el escaneo de las imágenes.
+- Las pruebas automatizadas.
 
 ---
 
 ## Decisión sobre Redis y PostgreSQL
 
-Redis y PostgreSQL se mantienen como imágenes externas oficiales:
+Redis y PostgreSQL se mantienen como imágenes oficiales externas:
 
 ```yaml
 db:
@@ -526,7 +719,11 @@ redis:
   image: redis:7-alpine
 ```
 
-No se generaron imágenes propias para estos servicios porque no contienen código desarrollado por el equipo. Son dependencias externas necesarias para ejecutar la solución localmente.
+No se generaron imágenes propias para estos servicios porque no contienen código desarrollado por el equipo.
+
+Estas imágenes funcionan como dependencias necesarias para la ejecución de la solución, principalmente durante el desarrollo y las validaciones locales.
+
+No se publican en los repositorios ECR del proyecto, dado que pueden descargarse directamente desde su registro oficial.
 
 ---
 
@@ -534,24 +731,18 @@ No se generaron imágenes propias para estos servicios porque no contienen códi
 
 Como resultado de esta etapa:
 
-* Se optimizaron los Dockerfile de los microservicios.
-* Se aplicó multi-stage build.
-* Se usaron imágenes base mínimas.
-* Se configuró usuario no-root.
-* Se agregaron archivos `.dockerignore`.
-* Se validó la ejecución local con Docker Compose.
-* Se publicaron las imágenes propias en Docker Hub.
-* Se dejó preparado el proyecto para integrar la publicación de imágenes en un pipeline de CI/CD.
-
----
-
-## Evidencias sugeridas
-
-Para la entrega se recomienda incluir capturas de:
-
-* Docker Desktop con los contenedores corriendo.
-* Docker Hub mostrando las imágenes publicadas.
-* Terminal con `docker compose up --build` exitoso.
-* Terminal con `docker push` exitoso.
-* Pull Request donde se incorporan los Dockerfile optimizados.
-* Issue/card del tablero marcada como finalizada.
+- Se optimizaron los Dockerfile de los seis microservicios.
+- Se aplicaron construcciones multi-stage.
+- Se utilizaron imágenes base reducidas cuando fue posible.
+- Los procesos se configuraron para ejecutarse mediante usuarios no-root.
+- Se incorporaron archivos `.dockerignore`.
+- Se validó la ejecución local mediante Docker Compose.
+- Las imágenes se construyen automáticamente mediante GitHub Actions.
+- Las imágenes de validación son analizadas con Trivy.
+- El análisis contempla vulnerabilidades `HIGH` y `CRITICAL`.
+- Los repositorios ECR se provisionan mediante Terraform.
+- Las imágenes se etiquetan con el SHA del commit y con `latest`.
+- El SHA del commit se utiliza para mantener la trazabilidad de los despliegues.
+- Las imágenes se publican automáticamente en Amazon ECR.
+- Los servicios se despliegan en AWS ECS mediante Terraform.
+- Las URLs desplegadas se publican en el resumen del workflow.
