@@ -46,14 +46,12 @@ jobs:
         run: npm install --global newman newman-reporter-htmlextra
 
       - name: Run integration tests
-        run: |
-          mkdir -p reports/newman
-
-          newman run "${{ inputs.postman-collection }}" \
-            --environment "tests/postman/environments/${{ inputs.postman-environment }}.postman_environment.json" \
-            --reporters cli,junit,htmlextra \
-            --reporter-junit-export "reports/newman/${{ inputs.postman-environment }}-results.xml" \
-            --reporter-htmlextra-export "reports/newman/${{ inputs.postman-environment }}-results.html"
+        env: 
+          POSTMAN_COLLECTION: ${{ inputs.postman-collection }} 
+          POSTMAN_ENVIRONMENT: ${{ inputs.postman-environment }} 
+        run: | 
+          mkdir -p reports/newman 
+          newman run "$POSTMAN_COLLECTION" \ --environment "tests/postman/environments/${POSTMAN_ENVIRONMENT}.postman_environment.json" \ --reporters cli,junit,htmlextra \ --reporter-junit-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.xml" \ --reporter-htmlextra-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.html"  
 
       - name: Upload Newman report
         id: upload-newman-report
@@ -67,6 +65,7 @@ jobs:
       - name: Publish Newman artifact summary
         if: always()
         env:
+          POSTMAN_ENVIRONMENT: ${{ inputs.postman-environment }}
           ARTIFACT_NAME: newman-${{ inputs.postman-environment }}-test-results
           ARTIFACT_URL: ${{ steps.upload-newman-report.outputs.artifact-url }}
           RUN_ARTIFACTS_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts
@@ -76,7 +75,7 @@ jobs:
             echo ""
             echo "| Item | Value |"
             echo "| --- | --- |"
-            echo "| Environment | ${{ inputs.postman-environment }} |"
+            echo "| Environment | ${POSTMAN_ENVIRONMENT} |"
             echo "| Artifact | ${ARTIFACT_NAME} |"
             echo "| Files | JUnit XML and HTML report |"
 
