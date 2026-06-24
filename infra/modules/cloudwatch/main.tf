@@ -6,7 +6,6 @@ locals {
       "AWS/ApplicationELB", "HealthyHostCount",
       "LoadBalancer", var.alb_arn_suffix,
       "TargetGroup", tg_arn_suffix,
-      { label = name }
     ]
   ]
 }
@@ -28,6 +27,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         type        = "metric"
         properties = {
           title   = "CPU Utilization - ECS"
+          region  = var.aws_region
           metrics = [["AWS/ECS", "CPUUtilization", "ClusterName", var.cluster_name]]
           period  = 300
           stat    = "Average"
@@ -39,6 +39,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         type        = "metric"
         properties = {
           title   = "Memory Utilization - ECS"
+          region  = var.aws_region
           metrics = [["AWS/ECS", "MemoryUtilization", "ClusterName", var.cluster_name]]
           period  = 300
           stat    = "Average"
@@ -48,7 +49,8 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type = "metric"
         properties = {
-          title = "Network Traffic - ALB"
+          title  = "Network Traffic - ALB"
+          region = var.aws_region
           metrics = [
             ["AWS/ApplicationELB", "ProcessedBytes", "LoadBalancer", var.alb_arn_suffix],
           ]
@@ -61,6 +63,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         type = "metric"
         properties = {
           title   = "ALB Health - Healthy Hosts"
+          region  = var.aws_region
           metrics = local.alb_health_metrics
           period  = 60
           stat    = "Average"
