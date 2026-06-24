@@ -139,3 +139,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "alerta_email" {
+  description = "Email para las alertas de CloudWatch"
+  type        = string
+  default     = "FC319295@fi365.ort.edu.uy"
+}

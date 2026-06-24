@@ -301,3 +301,15 @@ module "lambda" {
   security_group_ids = [module.security.lambda_sg_id]
   tags               = local.common_tags
 }
+
+module "cloudwatch" {
+  source                    = "./modules/cloudwatch"
+  services                  = local.services
+  cluster_name              = module.ecs.name_prefix
+  target_group_arn_suffixes = module.alb.target_group_arn_suffixes
+  alb_arn_suffix            = module.alb.alb_arn_suffix
+  aws_region                = var.aws_region
+  environment               = var.environment
+  project_name              = var.project_name
+  alerta_email              = var.alerta_email
+}
