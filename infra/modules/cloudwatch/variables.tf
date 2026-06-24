@@ -15,12 +15,8 @@ variable "alerta_email" {
 }
 
 variable "services" {
-  description = "Servicios publicados por el ALB."
-  type = map(object({
-    path_patterns = list(string)
-    priority      = number
-    health_path   = string
-  }))
+  description = "Servicios con log groups."
+  type        = set(string)
 }
 
 variable "environment" {
