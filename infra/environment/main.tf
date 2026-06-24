@@ -303,7 +303,7 @@ module "lambda" {
 }
 
 module "cloudwatch" {
-  source                    = "./modules/cloudwatch"
+  source                    = "../modules/cloudwatch"
   services                  = local.services
   cluster_name              = module.ecs.name_prefix
   target_group_arn_suffixes = module.alb.target_group_arn_suffixes
