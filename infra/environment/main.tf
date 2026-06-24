@@ -305,7 +305,7 @@ module "lambda" {
 module "cloudwatch" {
   source                    = "../modules/cloudwatch"
   services                  = local.services
-  cluster_name              = module.ecs.name_prefix
+  cluster_name              = module.ecs.cluster_name
   target_group_arn_suffixes = module.alb.target_group_arn_suffixes
   alb_arn_suffix            = module.alb.alb_arn_suffix
   aws_region                = var.aws_region
