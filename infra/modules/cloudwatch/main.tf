@@ -83,7 +83,7 @@ resource "aws_sns_topic_subscription" "email" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "cpu_alto" {
-  alarm_name          = "ecs-cpu-utilization-alta"
+  alarm_name          = "${local.name_prefix}-cpu-utilization-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1 # 1 período de 5 min = 5 min consecutivos
   metric_name         = "CPUUtilization"
@@ -102,7 +102,7 @@ resource "aws_cloudwatch_metric_alarm" "cpu_alto" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "memoria_alta" {
-  alarm_name          = "ecs-memory-utilization-alta"
+  alarm_name          = "${local.name_prefix}-memory-utilization-high"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "MemoryUtilization"
@@ -137,7 +137,7 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "errores_app" {
-  alarm_name          = "app-errores-frecuentes"
+  alarm_name          = "${local.name_prefix}-errores-frecuentes"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
   metric_name         = "ErrorCount"
