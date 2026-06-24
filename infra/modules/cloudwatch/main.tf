@@ -69,6 +69,20 @@ resource "aws_cloudwatch_dashboard" "main" {
           stat    = "Average"
           view    = "timeSeries"
         }
+      },
+      {
+        type = "log"
+        properties = {
+          title  = "Logs - Todos los servicios"
+          region = var.aws_region
+          view   = "table"
+          query = join("\n", [
+            "SOURCE '${join("', '", [for k, _ in var.services : "/ecs/${var.environment}/${k}"])}'",
+            "| fields @timestamp, @logStream, @message",
+            "| sort @timestamp desc",
+            "| limit 200"
+          ])
+        }
       }
 
     ]
@@ -129,7 +143,7 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
 
   name           = "errores-${each.key}"
   log_group_name = aws_cloudwatch_log_group.servicios[each.key].name
-  pattern        = "ERROR"
+  pattern        = "{ $.level = \"ERROR\" || $.severity = \"ERROR\" || $.status = \"error\" }"
 
   metric_transformation {
     name          = "ErrorCount"
