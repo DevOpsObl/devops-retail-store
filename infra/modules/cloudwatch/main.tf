@@ -76,12 +76,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title  = "Logs - Todos los servicios"
           region = var.aws_region
           view   = "table"
-          query = join("\n", [
-            "SOURCE '${join("', '", [for k, _ in var.services : "/ecs/${var.environment}/${k}"])}'",
-            "| fields @timestamp, @logStream, @message",
-            "| sort @timestamp desc",
-            "| limit 200"
-          ])
+          query = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
         }
       }
 
