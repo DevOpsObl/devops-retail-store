@@ -57,7 +57,9 @@ jobs:
   publish_images:
     name: Publish
     if: github.event_name != 'pull_request'
-    needs: registry_bootstrap
+    needs: 
+      - registry_bootstrap
+      - automated_tests
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
