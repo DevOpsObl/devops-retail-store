@@ -73,18 +73,20 @@ resource "aws_cloudwatch_dashboard" "main" {
       {
         type = "log"
         properties = {
-          title         = "Logs - Todos los servicios"
-          region        = var.aws_region
-          view          = "table"
-          logGroupNames = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
-          query         = <<-EOT
-      fields @timestamp, @logStream, @message
-      | sort @timestamp desc
-      | limit 200
-    EOT
+          title  = "Logs - Todos los servicios"
+          region = var.aws_region
+          view   = "table"
+
+          query = join("\n", concat(
+            [for k, _ in var.services : "SOURCE '/ecs/${var.environment}/${k}'"],
+            [
+              "fields @timestamp, @logStream, @message",
+              "| sort @timestamp desc",
+              "| limit 200"
+            ]
+          ))
         }
       }
-
     ]
   })
 }
