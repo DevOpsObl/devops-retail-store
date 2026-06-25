@@ -77,7 +77,11 @@ resource "aws_cloudwatch_dashboard" "main" {
           region        = var.aws_region
           view          = "table"
           logGroupNames = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
-          query         = "fields @timestamp, @logStream, @message\n| sort @timestamp desc\n| limit 200"
+          query         = <<-EOT
+      fields @timestamp, @logStream, @message
+      | sort @timestamp desc
+      | limit 200
+    EOT
         }
       }
 
