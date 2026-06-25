@@ -143,7 +143,14 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
 
   name           = "errores-${each.key}"
   log_group_name = aws_cloudwatch_log_group.servicios[each.key].name
-  pattern        = "?ERROR ?error ?\"level\":\"error\" ?\"level\":\"ERROR\""
+  pattern = lookup({
+    "catalog"  = "?error ?ERROR"
+    "orders"   = "?error ?ERROR"
+    "checkout" = "?error ?ERROR"
+    "cart"     = "?error ?ERROR"
+    "ui"       = "?error ?ERROR"
+    "admin"    = "?error ?ERROR"
+  }, each.key, "ERROR")
 
   metric_transformation {
     name          = "ErrorCount"
