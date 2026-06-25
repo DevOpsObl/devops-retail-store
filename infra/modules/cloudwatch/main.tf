@@ -143,7 +143,7 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
 
   name           = "errores-${each.key}"
   log_group_name = aws_cloudwatch_log_group.servicios[each.key].name
-  pattern        = "{ $.level = \"ERROR\" || $.severity = \"ERROR\" || $.status = \"error\" }"
+  pattern        = "?ERROR ?error ?\"level\":\"error\" ?\"level\":\"ERROR\""
 
   metric_transformation {
     name          = "ErrorCount"
