@@ -1,6 +1,6 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
-
+  log_group_names = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
   alb_health_metrics = [
     for name, tg_arn_suffix in var.target_group_arn_suffixes : [
       "AWS/ApplicationELB", "HealthyHostCount",
@@ -76,7 +76,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title         = "Logs - Todos los servicios"
           region        = var.aws_region
           view          = "table"
-          logGroupNames = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
+          logGroupNames = local.log_group_names
           query         = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
         }
       }
