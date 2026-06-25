@@ -1,6 +1,11 @@
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix     = "${var.project_name}-${var.environment}"
   log_group_names = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
+
+  logs_query = join(" ", concat(
+    [for k, _ in var.services : "SOURCE \"/ecs/${var.environment}/${k}\" |"],
+    ["fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"]
+  ))
   alb_health_metrics = [
     for name, tg_arn_suffix in var.target_group_arn_suffixes : [
       "AWS/ApplicationELB", "HealthyHostCount",
@@ -70,31 +75,31 @@ resource "aws_cloudwatch_dashboard" "main" {
           view    = "timeSeries"
         }
       },
-      # {
-      #   type = "log"
-      #   properties = {
-      #     title         = "Logs - Todos los servicios"
-      #     region        = var.aws_region
-      #     view          = "table"
-      #     logGroupNames = local.log_group_names
-      #     query         = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
-      #   }
-      # }
+      {
+        type = "log"
+        properties = {
+          title         = "Logs - Todos los servicios"
+          region        = var.aws_region
+          view          = "table"
+          logGroupNames = local.log_group_names
+          query         = local.logs_query
+        }
+      }
     ]
   })
 }
 
-resource "aws_cloudwatch_query_definition" "logs_servicios" {
-  name = "${local.name_prefix}-logs-servicios"
+# resource "aws_cloudwatch_query_definition" "logs_servicios" {
+#   name = "${local.name_prefix}-logs-servicios"
 
-  log_group_names = local.log_group_names
+#   log_group_names = local.log_group_names
 
-  query_string = <<-EOT
-    fields @timestamp, @logStream, @message
-    | sort @timestamp desc
-    | limit 200
-  EOT
-}
+#   query_string = <<-EOT
+#     fields @timestamp, @logStream, @message
+#     | sort @timestamp desc
+#     | limit 200
+#   EOT
+# }
 
 resource "aws_sns_topic" "alertas" {
   name = "${local.name_prefix}-alerts"
