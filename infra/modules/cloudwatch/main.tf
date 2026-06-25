@@ -70,18 +70,30 @@ resource "aws_cloudwatch_dashboard" "main" {
           view    = "timeSeries"
         }
       },
-      {
-        type = "log"
-        properties = {
-          title         = "Logs - Todos los servicios"
-          region        = var.aws_region
-          view          = "table"
-          logGroupNames = local.log_group_names
-          query         = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
-        }
-      }
+      # {
+      #   type = "log"
+      #   properties = {
+      #     title         = "Logs - Todos los servicios"
+      #     region        = var.aws_region
+      #     view          = "table"
+      #     logGroupNames = local.log_group_names
+      #     query         = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
+      #   }
+      # }
     ]
   })
+}
+
+resource "aws_cloudwatch_query_definition" "logs_servicios" {
+  name = "${local.name_prefix}-logs-servicios"
+
+  log_group_names = local.log_group_names
+
+  query_string = <<-EOT
+    fields @timestamp, @logStream, @message
+    | sort @timestamp desc
+    | limit 200
+  EOT
 }
 
 resource "aws_sns_topic" "alertas" {
