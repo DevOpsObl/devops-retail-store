@@ -357,9 +357,9 @@ Se deberán incluir como mínimo:
 Las imágenes se agregarán al documento una vez obtenidas:
 
 ```markdown
-![Resultado de Newman en Dev](assets/testing/newman-dev.png)
+![Resultado de Newman en Dev](assets/informe-testing/newman-dev.png)
 
-![Ejecución de testing en GitHub Actions](assets/testing/github-actions-testing.png)
+![Ejecución de testing en GitHub Actions](assets/informe-testing/github-actions-testing.png)
 ```
 
 ## Estructura de archivos
