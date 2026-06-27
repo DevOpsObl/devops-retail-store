@@ -46,20 +46,13 @@ jobs:
           terraform_version: ${{ inputs.terraform-version }}
 
       - name: Terraform init registry
-        run: |
-          terraform -chdir=infra/registry init \
-            -reconfigure \
-            -backend-config=backend/${TF_ENV}.hcl
+        run: make registry-init ENV="${TF_ENV}"
 
       - name: Terraform validate registry
-        run: terraform -chdir=infra/registry validate
+        run: make registry-validate
 
       - name: Terraform plan registry
-        run: |
-          terraform -chdir=infra/registry plan \
-            -var-file=tfvars/${TF_ENV}.tfvars
+        run: make registry-plan ENV="${TF_ENV}"
 
       - name: Terraform apply registry
-        run: |
-          terraform -chdir=infra/registry apply -auto-approve \
-            -var-file=tfvars/${TF_ENV}.tfvars
+        run: make registry-apply ENV="${TF_ENV}" AUTO_APPROVE="-auto-approve"

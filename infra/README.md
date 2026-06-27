@@ -24,6 +24,17 @@ make bootstrap-apply
 
 El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes. El bloqueo de concurrencia se realiza con `use_lockfile = true` en el backend S3 de cada ambiente.
 
+Para destruir el backend localmente, primero vaciar el bucket de estado remoto y luego ejecutar el destroy:
+
+```bash
+make bootstrap-empty-state-bucket CONFIRM_STATE_BUCKET_EMPTY=yes
+make bootstrap-destroy
+```
+
+Estos comandos son de uso manual y no forman parte de los pipelines. Antes de destruir el backend remoto, todos los estados de registry y runtime deben haber sido eliminados o migrados.
+
+El paso `bootstrap-empty-state-bucket` elimina versiones de objetos y delete markers del bucket S3. Es necesario porque el bucket tiene versionado habilitado y AWS no permite eliminar un bucket con objetos versionados, aunque en la consola se vean solo carpetas como `dev/`, `test/`, `prod/` o `registry/`.
+
 ## Registry de imagenes
 
 Los repositorios ECR viven en `infra/registry/` y se despliegan antes del runtime. Esto permite publicar imagenes aunque la VPC, ECS, RDS o el ALB todavia no existan.
@@ -37,6 +48,14 @@ make registry-apply ENV=dev
 ```
 
 Para `test` o `prod`, cambiar solo `ENV`. Si un ambiente ya tenia ECR creado desde el stack anterior `infra/environment`, primero hay que migrar/importar esos repositorios al estado de `infra/registry` antes de quitar su ownership del estado anterior.
+
+Para destruir los repositorios ECR de un ambiente localmente:
+
+```bash
+make registry-destroy ENV=dev
+```
+
+Este comando es de uso manual y no forma parte de los pipelines.
 
 ## Ambientes
 
@@ -84,6 +103,22 @@ make plan ENV=prod
 ```
 
 Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. El pipeline publica cada imagen con el SHA del commit y tambien con `latest`; ECS despliega el tag definido en `image_tag`, por defecto `latest`.
+
+Para destruir el runtime de un ambiente localmente:
+
+```bash
+make destroy ENV=dev
+```
+
+Este comando elimina la infraestructura runtime del ambiente seleccionado, pero no elimina los repositorios ECR del stack `infra/registry` ni el backend remoto del stack `infra/bootstrap`. Para una limpieza completa local, el orden recomendado es:
+
+```bash
+make destroy ENV=dev
+make registry-destroy ENV=dev
+make bootstrap-destroy
+```
+
+Los comandos de destruccion no son usados por los pipelines y requieren confirmacion interactiva, salvo que se pase `AUTO_APPROVE=-auto-approve`.
 
 ## Password del panel admin
 
