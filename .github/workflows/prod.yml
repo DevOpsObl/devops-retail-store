@@ -22,6 +22,8 @@ jobs:
   code_quality:
     name: Quality
     uses: ./.github/workflows/reusable-code-quality.yml
+    with:
+      publish-sonar-summary: true
     secrets: inherit
 
   security_analysis:
