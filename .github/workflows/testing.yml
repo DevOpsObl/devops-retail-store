@@ -45,33 +45,18 @@ jobs:
     name: Registry Bootstrap
     if: github.event_name != 'pull_request'
     needs:
-      - code_quality
-      - security_analysis
+      - automated_tests
     uses: ./.github/workflows/reusable-registry-bootstrap.yml
     with:
       environment: test
       aws-region: us-east-1
     secrets: inherit
 
-  publish_images:
-    name: Publish
-    if: github.event_name != 'pull_request'
-    needs: registry_bootstrap
-    uses: ./.github/workflows/reusable-publish-images.yml
-    with:
-      aws-region: us-east-1
-      ecr-repository-prefix: devops-retail-store-test
-      image-tag: ${{ github.sha }}
-    secrets: inherit
-
   gate_dev_to_test:
     name: Quality gate Dev -> Test
     runs-on: ubuntu-latest
     needs:
-      - code_quality
-      - security_analysis
-      - automated_tests
-      - publish_images
+      - registry_bootstrap
     if: github.event_name != 'pull_request'
     steps:
       - name: Verify Dev promotion gate
@@ -90,6 +75,17 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
           echo "Quality gate Dev -> Test aprobado."
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: registry_bootstrap
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-test
+      image-tag: ${{ github.sha }}
+    secrets: inherit
 
   deploy_test:
     name: Deploy Test
