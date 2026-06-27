@@ -79,7 +79,7 @@ jobs:
   publish_images:
     name: Publish
     if: github.event_name != 'pull_request'
-    needs: registry_bootstrap
+    needs: gate_dev_to_test
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
@@ -89,7 +89,7 @@ jobs:
 
   deploy_test:
     name: Deploy Test
-    needs: gate_dev_to_test
+    needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
     with:
