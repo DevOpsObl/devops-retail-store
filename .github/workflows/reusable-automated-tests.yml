@@ -50,12 +50,12 @@ jobs:
           POSTMAN_COLLECTION: ${{ inputs.postman-collection }} 
           POSTMAN_ENVIRONMENT: ${{ inputs.postman-environment }} 
         run: | 
-          mkdir -p reports/newman 
-          newman run "$POSTMAN_COLLECTION" \ 
-            --environment "tests/postman/environments/${POSTMAN_ENVIRONMENT}.postman_environment.json" \ 
-            --reporters cli,junit,htmlextra \ 
-            --reporter-junit-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.xml" \ 
-            --reporter-htmlextra-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.html"  
+          mkdir -p reports/newman
+          newman run "$POSTMAN_COLLECTION" \
+            --environment "tests/postman/environments/${POSTMAN_ENVIRONMENT}.postman_environment.json" \
+            --reporters cli,junit,htmlextra \
+            --reporter-junit-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.xml" \
+            --reporter-htmlextra-export "reports/newman/${POSTMAN_ENVIRONMENT}-results.html"
 
       - name: Upload Newman report
         id: upload-newman-report
