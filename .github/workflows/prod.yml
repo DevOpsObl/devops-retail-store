@@ -45,10 +45,22 @@ jobs:
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
+  registry_bootstrap:
+    name: Registry Bootstrap
+    if: github.event_name != 'pull_request'
+    needs:
+      - automated_tests
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: prod
+      aws-region: us-east-1
+    secrets: inherit
+
   gate_test_to_prod:
     name: Quality gate Test -> Prod
     runs-on: ubuntu-latest
-    needs: automated_tests
+    needs:
+      - registry_bootstrap
     if: github.event_name != 'pull_request'
     steps:
       # - name: Verify Test environment health
@@ -66,7 +78,7 @@ jobs:
             echo "| SonarCloud quality gate | Aprobado |"
             echo "| Analisis de seguridad | Aprobado |"
             echo "| Pruebas automatizadas | Aprobado |"
-            echo "| Promocion hacia Prod | Aprobada |"
+            echo "| Imagenes publicadas en ECR Prod | Aprobado |"
             echo "| Health check ambiente Test | Omitido por contexto del obligatorio |"
 
             echo ""
@@ -75,15 +87,25 @@ jobs:
 
           echo "Quality gate Test -> Prod aprobado."
 
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: gate_test_to_prod
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-prod
+      image-tag: ${{ github.sha }}
+    secrets: inherit
+
   deploy_prod:
     name: Deploy Prod
-    needs: gate_test_to_prod
+    needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: prod
       github-environment: Prod
       aws-region: us-east-1
-      ecr-repository-prefix: devops-retail-store-prod
       image-tag: ${{ github.sha }}
     secrets: inherit

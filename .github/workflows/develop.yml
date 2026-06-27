@@ -43,15 +43,40 @@ jobs:
     needs: build_images
     uses: ./.github/workflows/reusable-automated-tests.yml
 
+  registry_bootstrap:
+    name: Registry Bootstrap
+    if: github.event_name != 'pull_request'
+    needs:
+      - code_quality
+      - security_analysis
+      - automated_tests
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: dev
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs:
+      - registry_bootstrap
+      - automated_tests
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-dev
+      image-tag: ${{ github.sha }}
+    secrets: inherit
+
   deploy_dev:
     name: Deploy Dev
-    needs: automated_tests
+    needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
     with:
       environment: dev
       github-environment: Develop
       aws-region: us-east-1
-      ecr-repository-prefix: devops-retail-store-dev
       image-tag: ${{ github.sha }}
     secrets: inherit
