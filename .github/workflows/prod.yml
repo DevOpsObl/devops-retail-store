@@ -29,7 +29,9 @@ jobs:
 
   build_images:
     name: Build
-    needs: security_analysis
+    needs:
+      - code_quality
+      - security_analysis
     uses: ./.github/workflows/reusable-build-images.yml
     with:
       image-tag: ${{ github.sha }}
@@ -65,15 +67,36 @@ jobs:
   gate_test_to_prod:
     name: Quality gate Test -> Prod
     runs-on: ubuntu-latest
-    needs: publish_images
+    needs:
+      - code_quality
+      - security_analysis
+      - automated_tests
+      - publish_images
     if: github.event_name != 'pull_request'
     steps:
+      # - name: Verify Test environment health
+      #   if: vars.TEST_BASE_URL != ''
+      #   run: |
+      #     curl --fail --retry 5 --retry-all-errors --retry-delay 10 "${{ vars.TEST_BASE_URL }}/health"
+
       - name: Verify Test promotion gate
         run: |
-          echo "TODO: definir quality gate entre Test y Prod."
-          # TODO: definir umbrales requeridos para promover de Test a Prod.
-          # TODO: agregar pruebas E2E/regresion contra URL real de Test antes de promover a Prod.
-          # curl --fail "${{ vars.TEST_BASE_URL }}/health"
+          {
+            echo "## Quality gate Test -> Prod"
+            echo ""
+            echo "| Control | Estado |"
+            echo "| --- | :---: |"
+            echo "| SonarCloud quality gate | Aprobado |"
+            echo "| Analisis de seguridad | Aprobado |"
+            echo "| Pruebas automatizadas | Aprobado |"
+            echo "| Imagenes publicadas en ECR Prod | Aprobado |"
+            echo "| Health check ambiente Test | Omitido por contexto del obligatorio |"
+
+            echo ""
+            echo "Commit promovido: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Quality gate Test -> Prod aprobado."
 
   deploy_prod:
     name: Deploy Prod

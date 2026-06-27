@@ -101,6 +101,8 @@ La promoción hacia `main` requerirá:
 * Pull Request aprobado por otro integrante.
 * Ausencia de errores bloqueantes conocidos.
 
+En un ambiente real, el gate de promoción `Test -> Prod` también debería ejecutar un health check contra el ambiente de Test antes de publicar en Producción, por ejemplo validando el endpoint `/health` mediante una variable como `TEST_BASE_URL`. Para esta entrega del obligatorio, ese control queda documentado pero no se ejecuta automáticamente, ya que el ambiente de Test no necesariamente estará levantado durante la evaluación.
+
 ## 7. Resultados obtenidos
 
 Esta sección se completará luego de ejecutar el análisis estático.
