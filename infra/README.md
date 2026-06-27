@@ -24,13 +24,16 @@ make bootstrap-apply
 
 El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes. El bloqueo de concurrencia se realiza con `use_lockfile = true` en el backend S3 de cada ambiente.
 
-Para destruir el backend localmente, usar:
+Para destruir el backend localmente, primero vaciar el bucket de estado remoto y luego ejecutar el destroy:
 
 ```bash
+make bootstrap-empty-state-bucket CONFIRM_STATE_BUCKET_EMPTY=yes
 make bootstrap-destroy
 ```
 
-Este comando es de uso manual y no forma parte de los pipelines. Antes de destruir el backend remoto, todos los estados de registry y runtime deben haber sido eliminados o migrados.
+Estos comandos son de uso manual y no forman parte de los pipelines. Antes de destruir el backend remoto, todos los estados de registry y runtime deben haber sido eliminados o migrados.
+
+El paso `bootstrap-empty-state-bucket` elimina versiones de objetos y delete markers del bucket S3. Es necesario porque el bucket tiene versionado habilitado y AWS no permite eliminar un bucket con objetos versionados, aunque en la consola se vean solo carpetas como `dev/`, `test/`, `prod/` o `registry/`.
 
 ## Registry de imagenes
 
