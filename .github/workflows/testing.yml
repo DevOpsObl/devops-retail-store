@@ -29,7 +29,9 @@ jobs:
 
   build_images:
     name: Build
-    needs: security_analysis
+    needs:
+      - code_quality
+      - security_analysis
     uses: ./.github/workflows/reusable-build-images.yml
     with:
       image-tag: ${{ github.sha }}
@@ -65,13 +67,29 @@ jobs:
   gate_dev_to_test:
     name: Quality gate Dev -> Test
     runs-on: ubuntu-latest
-    needs: publish_images
+    needs:
+      - code_quality
+      - security_analysis
+      - automated_tests
+      - publish_images
     if: github.event_name != 'pull_request'
     steps:
       - name: Verify Dev promotion gate
         run: |
-          echo "TODO: definir quality gate entre Dev y Test."
-          # TODO: definir umbrales requeridos para promover de Dev a Test.
+          {
+            echo "## Quality gate Dev -> Test"
+            echo ""
+            echo "| Control | Estado |"
+            echo "| --- | :---: |"
+            echo "| SonarCloud quality gate | Aprobado |"
+            echo "| Analisis de seguridad | Aprobado |"
+            echo "| Pruebas automatizadas | Aprobado |"
+            echo "| Imagenes publicadas en ECR Test | Aprobado |"
+            echo ""
+            echo "Commit promovido: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Quality gate Dev -> Test aprobado."
 
   deploy_test:
     name: Deploy Test
