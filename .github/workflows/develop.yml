@@ -31,7 +31,9 @@ jobs:
 
   build_images:
     name: Build
-    needs: security_analysis
+    needs: 
+      - security_analysis
+      - code_quality
     uses: ./.github/workflows/reusable-build-images.yml
     with:
       image-tag: ${{ github.sha }}
