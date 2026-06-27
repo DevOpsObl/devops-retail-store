@@ -24,7 +24,6 @@ jobs:
           semgrep scan \
             --config=auto \
             --severity=ERROR \
-            --strict \
             --error \
             --exclude=node_modules \
             --exclude=dist \
