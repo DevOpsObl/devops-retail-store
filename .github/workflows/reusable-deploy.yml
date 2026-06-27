@@ -12,6 +12,9 @@ on:
       aws-region:
         required: true
         type: string
+      ecr-repository-prefix:
+        required: true
+        type: string
       image-tag:
         required: true
         type: string
@@ -30,8 +33,28 @@ on:
         required: false
 
 jobs:
+  registry_bootstrap:
+    name: Registry Bootstrap
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: ${{ inputs.environment }}
+      aws-region: ${{ inputs.aws-region }}
+      terraform-version: ${{ inputs.terraform-version }}
+    secrets: inherit
+
+  publish_images:
+    name: Publish Images
+    needs: registry_bootstrap
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: ${{ inputs.aws-region }}
+      ecr-repository-prefix: ${{ inputs.ecr-repository-prefix }}
+      image-tag: ${{ inputs.image-tag }}
+    secrets: inherit
+
   deploy:
     name: ${{ inputs.environment }}
+    needs: publish_images
     runs-on: ubuntu-latest
     environment:
       name: ${{ inputs.github-environment }}
