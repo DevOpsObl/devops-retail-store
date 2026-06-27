@@ -24,6 +24,7 @@ jobs:
           fetch-depth: 0
 
       - name: Validate SonarCloud configuration
+        if: github.event_name == 'pull_request' || github.ref_name == 'main'
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
@@ -45,6 +46,7 @@ jobs:
           fi
 
       - name: Run SonarCloud analysis
+        if: github.event_name == 'pull_request' || github.ref_name == 'main'
         uses: SonarSource/sonarqube-scan-action@v8
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -61,7 +63,7 @@ jobs:
             -Dsonar.qualitygate.timeout=300
 
       - name: Publish SonarCloud summary
-        if: always() && inputs.publish-sonar-summary
+        if: always() && inputs.publish-sonar-summary && (github.event_name == 'pull_request' || github.ref_name == 'main')
         # continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -221,3 +223,18 @@ jobs:
             echo "SonarCloud Quality Gate no aprobado: ${QUALITY_GATE_STATUS}"
             exit 1
           fi
+
+      - name: Skip SonarCloud analysis
+        if: github.event_name != 'pull_request' && github.ref_name != 'main'
+        run: |
+          {
+            echo "## SonarCloud analysis skipped"
+            echo ""
+            echo "SonarCloud se ejecuta solo en Pull Requests y en \`main\`."
+            echo ""
+            echo "| Item | Value |"
+            echo "| --- | --- |"
+            echo "| Event | ${GITHUB_EVENT_NAME} |"
+            echo "| Branch | ${GITHUB_REF_NAME} |"
+            echo "| Commit | ${GITHUB_SHA} |"
+          } >> "$GITHUB_STEP_SUMMARY"
