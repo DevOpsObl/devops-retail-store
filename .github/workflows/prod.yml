@@ -29,6 +29,7 @@ jobs:
   security_analysis:
     name: Security
     uses: ./.github/workflows/reusable-security-analysis.yml
+    secrets: inherit
 
   build_images:
     name: Build
