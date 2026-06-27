@@ -60,164 +60,164 @@ jobs:
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
 
-      # - name: Publish SonarCloud summary
-      #   if: always() && inputs.publish-sonar-summary
-      #   # continue-on-error: true
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
-      #     SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
-      #     PR_NUMBER: ${{ github.event.pull_request.number }}
-      #   run: |
-      #     set -u
+      - name: Publish SonarCloud summary
+        if: always() && inputs.publish-sonar-summary
+        # continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -u
 
-      #     SONAR_API_URL="https://sonarcloud.io/api"
-      #     SONAR_DASHBOARD_URL="https://sonarcloud.io/dashboard?id=${SONAR_PROJECT_KEY}"
-      #     SCOPE_LABEL="Branch ${GITHUB_REF_NAME}"
-      #     SCOPE_ARGS=()
-      #     NEW_CODE_ARGS=()
+          SONAR_API_URL="https://sonarcloud.io/api"
+          SONAR_DASHBOARD_URL="https://sonarcloud.io/dashboard?id=${SONAR_PROJECT_KEY}"
+          SCOPE_LABEL="Branch ${GITHUB_REF_NAME}"
+          SCOPE_ARGS=()
+          NEW_CODE_ARGS=()
 
-      #     if [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER}" ]; then
-      #       SCOPE_LABEL="Pull Request #${PR_NUMBER}"
-      #       SONAR_DASHBOARD_URL="${SONAR_DASHBOARD_URL}&pullRequest=${PR_NUMBER}"
-      #       SCOPE_ARGS+=(--data-urlencode "pullRequest=${PR_NUMBER}")
-      #     else
-      #       SONAR_DASHBOARD_URL="${SONAR_DASHBOARD_URL}&branch=${GITHUB_REF_NAME}"
-      #       SCOPE_ARGS+=(--data-urlencode "branch=${GITHUB_REF_NAME}")
-      #       NEW_CODE_ARGS+=(--data-urlencode "inNewCodePeriod=true")
-      #     fi
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ] && [ -n "${PR_NUMBER}" ]; then
+            SCOPE_LABEL="Pull Request #${PR_NUMBER}"
+            SONAR_DASHBOARD_URL="${SONAR_DASHBOARD_URL}&pullRequest=${PR_NUMBER}"
+            SCOPE_ARGS+=(--data-urlencode "pullRequest=${PR_NUMBER}")
+          else
+            SONAR_DASHBOARD_URL="${SONAR_DASHBOARD_URL}&branch=${GITHUB_REF_NAME}"
+            SCOPE_ARGS+=(--data-urlencode "branch=${GITHUB_REF_NAME}")
+            NEW_CODE_ARGS+=(--data-urlencode "inNewCodePeriod=true")
+          fi
 
-      #     sonar_get() {
-      #       local endpoint="$1"
-      #       shift
+          sonar_get() {
+            local endpoint="$1"
+            shift
 
-      #       curl --silent --show-error --fail --get --user "${SONAR_TOKEN}:" "$@" "${SONAR_API_URL}/${endpoint}" # gitleaks:allow
-      #     }
+            curl --silent --show-error --fail --get --user "${SONAR_TOKEN}:" "$@" "${SONAR_API_URL}/${endpoint}" # gitleaks:allow
+          }
 
-      #     issue_total() {
-      #       local severities="$1"
-      #       local type="${2:-}"
-      #       local response
+          issue_total() {
+            local severities="$1"
+            local type="${2:-}"
+            local response
 
-      #       if [ -n "$type" ]; then
-      #         response="$(sonar_get "issues/search" \
-      #           --data-urlencode "componentKeys=${SONAR_PROJECT_KEY}" \
-      #           --data-urlencode "severities=${severities}" \
-      #           --data-urlencode "types=${type}" \
-      #           --data-urlencode "resolved=false" \
-      #           --data-urlencode "ps=1" \
-      #           "${SCOPE_ARGS[@]}" \
-      #           "${NEW_CODE_ARGS[@]}")" || {
-      #             echo "N/A"
-      #             return
-      #           }
-      #       else
-      #         response="$(sonar_get "issues/search" \
-      #           --data-urlencode "componentKeys=${SONAR_PROJECT_KEY}" \
-      #           --data-urlencode "severities=${severities}" \
-      #           --data-urlencode "resolved=false" \
-      #           --data-urlencode "ps=1" \
-      #           "${SCOPE_ARGS[@]}" \
-      #           "${NEW_CODE_ARGS[@]}")" || {
-      #             echo "N/A"
-      #             return
-      #           }
-      #       fi
+            if [ -n "$type" ]; then
+              response="$(sonar_get "issues/search" \
+                --data-urlencode "componentKeys=${SONAR_PROJECT_KEY}" \
+                --data-urlencode "severities=${severities}" \
+                --data-urlencode "types=${type}" \
+                --data-urlencode "resolved=false" \
+                --data-urlencode "ps=1" \
+                "${SCOPE_ARGS[@]}" \
+                "${NEW_CODE_ARGS[@]}")" || {
+                  echo "N/A"
+                  return
+                }
+            else
+              response="$(sonar_get "issues/search" \
+                --data-urlencode "componentKeys=${SONAR_PROJECT_KEY}" \
+                --data-urlencode "severities=${severities}" \
+                --data-urlencode "resolved=false" \
+                --data-urlencode "ps=1" \
+                "${SCOPE_ARGS[@]}" \
+                "${NEW_CODE_ARGS[@]}")" || {
+                  echo "N/A"
+                  return
+                }
+            fi
 
-      #       echo "$response" | jq -r '.total // "N/A"'
-      #     }
+            echo "$response" | jq -r '.total // "N/A"'
+          }
 
-      #     pass_count_max() {
-      #       local value="$1"
-      #       local max="$2"
+          pass_count_max() {
+            local value="$1"
+            local max="$2"
 
-      #       if [ "$value" = "N/A" ]; then
-      #         echo "⚠️"
-      #       elif [ "$value" -le "$max" ]; then
-      #         echo "✅"
-      #       else
-      #         echo "❌"
-      #       fi
-      #     }
+            if [ "$value" = "N/A" ]; then
+              echo "⚠️"
+            elif [ "$value" -le "$max" ]; then
+              echo "✅"
+            else
+              echo "❌"
+            fi
+          }
 
-      #     pass_percent_less_than() {
-      #       local value="$1"
-      #       local max="$2"
+          pass_percent_less_than() {
+            local value="$1"
+            local max="$2"
 
-      #       if [ "$value" = "N/A" ]; then
-      #         echo "⚠️"
-      #       elif awk "BEGIN { exit !($value < $max) }"; then
-      #         echo "✅"
-      #       else
-      #         echo "❌"
-      #       fi
-      #     }
+            if [ "$value" = "N/A" ]; then
+              echo "⚠️"
+            elif awk "BEGIN { exit !($value < $max) }"; then
+              echo "✅"
+            else
+              echo "❌"
+            fi
+          }
 
-      #     pass_quality_gate() {
-      #       local value="$1"
+          pass_quality_gate() {
+            local value="$1"
 
-      #       if [ "$value" = "OK" ]; then
-      #         echo "✅"
-      #         return 0
-      #       elif [ "$value" = "N/A" ]; then
-      #         echo "⚠️"
-      #         return 1
-      #       else
-      #         echo "❌"
-      #         return 1
-      #       fi
-      #     }
+            if [ "$value" = "OK" ]; then
+              echo "✅"
+              return 0
+            elif [ "$value" = "N/A" ]; then
+              echo "⚠️"
+              return 1
+            else
+              echo "❌"
+              return 1
+            fi
+          }
 
-      #     BLOCKER_ISSUES="$(issue_total "BLOCKER")"
-      #     CRITICAL_ISSUES="$(issue_total "CRITICAL")"
-      #     MAJOR_CODE_SMELLS="$(issue_total "MAJOR" "CODE_SMELL")"
+          BLOCKER_ISSUES="$(issue_total "BLOCKER")"
+          CRITICAL_ISSUES="$(issue_total "CRITICAL")"
+          MAJOR_CODE_SMELLS="$(issue_total "MAJOR" "CODE_SMELL")"
 
-      #     DUPLICATION_RESPONSE="$(sonar_get "measures/component" \
-      #       --data-urlencode "component=${SONAR_PROJECT_KEY}" \
-      #       --data-urlencode "metricKeys=new_duplicated_lines_density" \
-      #       "${SCOPE_ARGS[@]}")" || DUPLICATION_RESPONSE=""
+          DUPLICATION_RESPONSE="$(sonar_get "measures/component" \
+            --data-urlencode "component=${SONAR_PROJECT_KEY}" \
+            --data-urlencode "metricKeys=new_duplicated_lines_density" \
+            "${SCOPE_ARGS[@]}")" || DUPLICATION_RESPONSE=""
 
-      #     NEW_DUPLICATION="$(echo "$DUPLICATION_RESPONSE" | jq -r '.component.measures[]? | select(.metric == "new_duplicated_lines_density") | (.period.value // .value // "N/A")' | head -n 1)"
-      #     NEW_DUPLICATION="${NEW_DUPLICATION:-N/A}"
+          NEW_DUPLICATION="$(echo "$DUPLICATION_RESPONSE" | jq -r '.component.measures[]? | select(.metric == "new_duplicated_lines_density") | (.period.value // .value // "N/A")' | head -n 1)"
+          NEW_DUPLICATION="${NEW_DUPLICATION:-N/A}"
 
-      #     QUALITY_GATE_RESPONSE="$(sonar_get "qualitygates/project_status" \
-      #       --data-urlencode "projectKey=${SONAR_PROJECT_KEY}" \
-      #       "${SCOPE_ARGS[@]}")" || QUALITY_GATE_RESPONSE=""
+          QUALITY_GATE_RESPONSE="$(sonar_get "qualitygates/project_status" \
+            --data-urlencode "projectKey=${SONAR_PROJECT_KEY}" \
+            "${SCOPE_ARGS[@]}")" || QUALITY_GATE_RESPONSE=""
 
-      #     QUALITY_GATE_STATUS="$(echo "$QUALITY_GATE_RESPONSE" | jq -r '.projectStatus.status // "N/A"')"
-      #     QUALITY_GATE_STATUS="${QUALITY_GATE_STATUS:-N/A}"
+          QUALITY_GATE_STATUS="$(echo "$QUALITY_GATE_RESPONSE" | jq -r '.projectStatus.status // "N/A"')"
+          QUALITY_GATE_STATUS="${QUALITY_GATE_STATUS:-N/A}"
 
-      #     BLOCKER_STATUS="$(pass_count_max "$BLOCKER_ISSUES" 0)"
-      #     CRITICAL_STATUS="$(pass_count_max "$CRITICAL_ISSUES" 0)"
-      #     MAJOR_CODE_SMELLS_STATUS="$(pass_count_max "$MAJOR_CODE_SMELLS" 5)"
-      #     DUPLICATION_STATUS="$(pass_percent_less_than "$NEW_DUPLICATION" 5)"
-      #     QUALITY_GATE_FAILED=0
-      #     QUALITY_GATE_ICON="$(pass_quality_gate "$QUALITY_GATE_STATUS")" ||
-      #       QUALITY_GATE_FAILED=1
+          BLOCKER_STATUS="$(pass_count_max "$BLOCKER_ISSUES" 0)"
+          CRITICAL_STATUS="$(pass_count_max "$CRITICAL_ISSUES" 0)"
+          MAJOR_CODE_SMELLS_STATUS="$(pass_count_max "$MAJOR_CODE_SMELLS" 5)"
+          DUPLICATION_STATUS="$(pass_percent_less_than "$NEW_DUPLICATION" 5)"
+          QUALITY_GATE_FAILED=0
+          QUALITY_GATE_ICON="$(pass_quality_gate "$QUALITY_GATE_STATUS")" ||
+            QUALITY_GATE_FAILED=1
 
-      #     {
-      #       echo "## SonarCloud quality analysis"
-      #       echo ""
-      #       echo "| Item | Value |"
-      #       echo "| --- | --- |"
-      #       echo "| Project | ${SONAR_PROJECT_KEY} |"
-      #       echo "| Organization | ${SONAR_ORGANIZATION} |"
-      #       echo "| Scope | ${SCOPE_LABEL} |"
-      #       echo "| Commit | ${GITHUB_SHA} |"
-      #       echo "| Quality gate | Enforced with \`sonar.qualitygate.wait=true\` |"
-      #       echo ""
-      #       echo "| Métrica | Resultado | Umbral | Estado |"
-      #       echo "| --- | ---: | --- | :---: |"
-      #       echo "| Issues Blocker nuevos | ${BLOCKER_ISSUES} | 0 | ${BLOCKER_STATUS} |"
-      #       echo "| Issues Critical nuevos | ${CRITICAL_ISSUES} | 0 | ${CRITICAL_STATUS} |"
-      #       echo "| Code smells Major nuevos | ${MAJOR_CODE_SMELLS} | Máximo 5 | ${MAJOR_CODE_SMELLS_STATUS} |"
-      #       echo "| Duplicación en código nuevo | ${NEW_DUPLICATION}% | Menor a 5% | ${DUPLICATION_STATUS} |"
-      #       echo "| Quality Gate | ${QUALITY_GATE_STATUS} | Aprobado | ${QUALITY_GATE_ICON} |"
-      #       echo ""
-      #       echo "[Open SonarCloud dashboard](${SONAR_DASHBOARD_URL})"
-      #     } >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## SonarCloud quality analysis"
+            echo ""
+            echo "| Item | Value |"
+            echo "| --- | --- |"
+            echo "| Project | ${SONAR_PROJECT_KEY} |"
+            echo "| Organization | ${SONAR_ORGANIZATION} |"
+            echo "| Scope | ${SCOPE_LABEL} |"
+            echo "| Commit | ${GITHUB_SHA} |"
+            echo "| Quality gate | Enforced with \`sonar.qualitygate.wait=true\` |"
+            echo ""
+            echo "| Métrica | Resultado | Umbral | Estado |"
+            echo "| --- | ---: | --- | :---: |"
+            echo "| Issues Blocker nuevos | ${BLOCKER_ISSUES} | 0 | ${BLOCKER_STATUS} |"
+            echo "| Issues Critical nuevos | ${CRITICAL_ISSUES} | 0 | ${CRITICAL_STATUS} |"
+            echo "| Code smells Major nuevos | ${MAJOR_CODE_SMELLS} | Máximo 5 | ${MAJOR_CODE_SMELLS_STATUS} |"
+            echo "| Duplicación en código nuevo | ${NEW_DUPLICATION}% | Menor a 5% | ${DUPLICATION_STATUS} |"
+            echo "| Quality Gate | ${QUALITY_GATE_STATUS} | Aprobado | ${QUALITY_GATE_ICON} |"
+            echo ""
+            echo "[Open SonarCloud dashboard](${SONAR_DASHBOARD_URL})"
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      #     if [ "$QUALITY_GATE_FAILED" -ne 0 ]; then
-      #       echo "SonarCloud Quality Gate no aprobado: ${QUALITY_GATE_STATUS}"
-      #       exit 1
-      #     fi
+          if [ "$QUALITY_GATE_FAILED" -ne 0 ]; then
+            echo "SonarCloud Quality Gate no aprobado: ${QUALITY_GATE_STATUS}"
+            exit 1
+          fi
