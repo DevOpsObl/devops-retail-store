@@ -91,10 +91,7 @@ jobs:
             local endpoint="$1"
             shift
 
-            curl --silent --show-error --fail --get \
-              --user "${SONAR_TOKEN}:" \
-              "$@" \
-              "${SONAR_API_URL}/${endpoint}"
+            curl --silent --show-error --fail --get --user "${SONAR_TOKEN}:" "$@" "${SONAR_API_URL}/${endpoint}" # gitleaks:allow
           }
 
           issue_total() {
