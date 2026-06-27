@@ -36,6 +36,9 @@ resource "aws_lb_target_group" "service" {
 
 # Listener HTTP principal. Por defecto envia trafico a la UI.
 resource "aws_lb_listener" "http" {
+  # nosemgrep: terraform.aws.security.insecure-load-balancer-tls-version
+  # Ambiente de laboratorio sin dominio/certificado ACM. En produccion debe usarse HTTPS con TLS 1.2+.
+
   load_balancer_arn = aws_lb.this.arn
   port              = 80
   protocol          = "HTTP"

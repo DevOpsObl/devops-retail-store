@@ -39,12 +39,15 @@ jobs:
 
       - name: Build Docker image
         id: image
+        env: 
+          SERVICE_NAME: ${{ matrix.service.name }} 
+          SERVICE_PATH: ${{ matrix.service.path }} 
+          IMAGE_TAG_INPUT: ${{ inputs.image-tag }}
         run: |
-          service_name_lower="${{ matrix.service.name }}"
-          service_name_lower="${service_name_lower,,}"
-          image_tag="retail-${service_name_lower}:${{ inputs.image-tag }}"
+          service_name_lower="${SERVICE_NAME,,}"
+          image_tag="retail-${service_name_lower}:${IMAGE_TAG_INPUT}"
           echo "uri=${image_tag}" >> "$GITHUB_OUTPUT"
-          docker build --tag "$image_tag" ${{ matrix.service.path }}
+          docker build --tag "$image_tag" "$SERVICE_PATH"
 
       - name: Trivy Image Scan
         uses: aquasecurity/trivy-action@v0.36.0
