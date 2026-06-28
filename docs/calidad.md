@@ -101,9 +101,11 @@ La promoción hacia `main` requerirá:
 * Pull Request aprobado por otro integrante.
 * Ausencia de errores bloqueantes conocidos.
 
+En un ambiente real, el gate de promoción `Test -> Prod` también debería ejecutar un health check contra el ambiente de Test antes de publicar en Producción, por ejemplo validando el endpoint `/health` mediante una variable como `TEST_BASE_URL`. Para esta entrega del obligatorio, ese control queda documentado pero no se ejecuta automáticamente, ya que el ambiente de Test no necesariamente estará levantado durante la evaluación.
+
 ## 7. Resultados obtenidos
 
-Esta sección se completará luego de ejecutar el análisis estático.
+Esta sección registra los resultados y observaciones obtenidos durante la ejecución de los controles de calidad.
 
 | Métrica                     | Resultado |      Umbral | Cumple    |
 | --------------------------- | --------: | ----------: | --------- |
@@ -112,6 +114,7 @@ Esta sección se completará luego de ejecutar el análisis estático.
 | Code smells Major nuevos    | Pendiente |    Máximo 5 | Pendiente |
 | Duplicación en código nuevo | Pendiente | Menor a 5 % | Pendiente |
 | Quality Gate                | Pendiente |    Aprobado | Pendiente |
+| Secretos Gitleaks           | Falso positivo `curl-auth-user` documentado | 0 secretos reales | Cumple con excepción |
 
 ## 8. Hallazgos significativos
 
@@ -129,7 +132,7 @@ Cada hallazgo deberá registrar:
 
 | ID        | Hallazgo                | Severidad | Ambiente o rama | Estado    |
 | --------- | ----------------------- | --------- | --------------- | --------- |
-| Pendiente | Pendiente de ejecución. | Pendiente | Pendiente       | Pendiente |
+| GIT-001 | Gitleaks reportó `curl-auth-user` en `.github/workflows/reusable-code-quality.yml` por el uso de `curl --user "${SONAR_TOKEN}:"` contra la API de SonarCloud. El valor no está hardcodeado: se inyecta desde GitHub Secrets en tiempo de ejecución. Se agregó `gitleaks:allow` únicamente en esa línea y el scan de secretos queda enfocado en el estado vigente del repositorio para evitar bloquear Test o Prod por el commit histórico ya corregido. | Baja | Testing / Producción | Falso positivo documentado |
 
 ## 9. Remediaciones aplicadas
 

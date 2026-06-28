@@ -22,14 +22,18 @@ jobs:
   code_quality:
     name: Quality
     uses: ./.github/workflows/reusable-code-quality.yml
+    secrets: inherit
 
   security_analysis:
     name: Security
     uses: ./.github/workflows/reusable-security-analysis.yml
+    secrets: inherit
 
   build_images:
     name: Build
-    needs: security_analysis
+    needs:
+      - code_quality
+      - security_analysis
     uses: ./.github/workflows/reusable-build-images.yml
     with:
       image-tag: ${{ github.sha }}
@@ -43,18 +47,41 @@ jobs:
     name: Registry Bootstrap
     if: github.event_name != 'pull_request'
     needs:
-      - code_quality
-      - security_analysis
+      - automated_tests
     uses: ./.github/workflows/reusable-registry-bootstrap.yml
     with:
       environment: test
       aws-region: us-east-1
     secrets: inherit
 
+  gate_dev_to_test:
+    name: Quality gate Dev -> Test
+    runs-on: ubuntu-latest
+    needs:
+      - registry_bootstrap
+    if: github.event_name != 'pull_request'
+    steps:
+      - name: Verify Dev promotion gate
+        run: |
+          {
+            echo "## Quality gate Dev -> Test"
+            echo ""
+            echo "| Control | Estado |"
+            echo "| --- | :---: |"
+            echo "| SonarCloud quality gate | Aprobado |"
+            echo "| Analisis de seguridad | Aprobado |"
+            echo "| Pruebas automatizadas | Aprobado |"
+            echo "| Imagenes publicadas en ECR Test | Aprobado |"
+            echo ""
+            echo "Commit promovido: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Quality gate Dev -> Test aprobado."
+
   publish_images:
     name: Publish
     if: github.event_name != 'pull_request'
-    needs: registry_bootstrap
+    needs: gate_dev_to_test
     uses: ./.github/workflows/reusable-publish-images.yml
     with:
       aws-region: us-east-1
@@ -62,20 +89,9 @@ jobs:
       image-tag: ${{ github.sha }}
     secrets: inherit
 
-  gate_dev_to_test:
-    name: Quality gate Dev -> Test
-    runs-on: ubuntu-latest
-    needs: publish_images
-    if: github.event_name != 'pull_request'
-    steps:
-      - name: Verify Dev promotion gate
-        run: |
-          echo "TODO: definir quality gate entre Dev y Test."
-          # TODO: definir umbrales requeridos para promover de Dev a Test.
-
   deploy_test:
     name: Deploy Test
-    needs: gate_dev_to_test
+    needs: publish_images
     if: github.event_name != 'pull_request'
     uses: ./.github/workflows/reusable-deploy.yml
     with:

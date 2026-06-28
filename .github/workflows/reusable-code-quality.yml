@@ -2,6 +2,12 @@ name: Analisis de calidad de codigo
 
 on:
   workflow_call:
+    inputs:
+      publish-sonar-summary:
+        description: Publica el resumen detallado de SonarCloud consultando su API.
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   code_quality:
@@ -55,7 +61,7 @@ jobs:
             -Dsonar.qualitygate.timeout=300
 
       - name: Publish SonarCloud summary
-        if: always()
+        if: always() && inputs.publish-sonar-summary
         # continue-on-error: true
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -85,10 +91,7 @@ jobs:
             local endpoint="$1"
             shift
 
-            curl --silent --show-error --fail --get \
-              --user "${SONAR_TOKEN}:" \
-              "$@" \
-              "${SONAR_API_URL}/${endpoint}"
+            curl --silent --show-error --fail --get --user "${SONAR_TOKEN}:" "$@" "${SONAR_API_URL}/${endpoint}" # gitleaks:allow
           }
 
           issue_total() {

@@ -24,6 +24,17 @@ make bootstrap-apply
 
 El bootstrap se ejecuta una vez y crea un backend compartido para todos los ambientes. El bloqueo de concurrencia se realiza con `use_lockfile = true` en el backend S3 de cada ambiente.
 
+Para destruir el backend localmente, primero vaciar el bucket de estado remoto y luego ejecutar el destroy:
+
+```bash
+make bootstrap-empty-state-bucket CONFIRM_STATE_BUCKET_EMPTY=yes
+make bootstrap-destroy
+```
+
+Estos comandos son de uso manual y no forman parte de los pipelines. Antes de destruir el backend remoto, todos los estados de registry y runtime deben haber sido eliminados o migrados.
+
+El paso `bootstrap-empty-state-bucket` elimina versiones de objetos y delete markers del bucket S3. Es necesario porque el bucket tiene versionado habilitado y AWS no permite eliminar un bucket con objetos versionados, aunque en la consola se vean solo carpetas como `dev/`, `test/`, `prod/` o `registry/`.
+
 ## Registry de imagenes
 
 Los repositorios ECR viven en `infra/registry/` y se despliegan antes del runtime. Esto permite publicar imagenes aunque la VPC, ECS, RDS o el ALB todavia no existan.
@@ -37,6 +48,14 @@ make registry-apply ENV=dev
 ```
 
 Para `test` o `prod`, cambiar solo `ENV`. Si un ambiente ya tenia ECR creado desde el stack anterior `infra/environment`, primero hay que migrar/importar esos repositorios al estado de `infra/registry` antes de quitar su ownership del estado anterior.
+
+Para destruir los repositorios ECR de un ambiente localmente:
+
+```bash
+make registry-destroy ENV=dev
+```
+
+Este comando es de uso manual y no forma parte de los pipelines.
 
 ## Ambientes
 
@@ -85,15 +104,21 @@ make plan ENV=prod
 
 Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. El pipeline publica cada imagen con el SHA del commit y tambien con `latest`; ECS despliega el tag definido en `image_tag`, por defecto `latest`.
 
-## Guardia de despliegue ECS
+Para destruir el runtime de un ambiente localmente:
 
-Cada servicio ECS ejecuta la Lambda `deployment-validator` en `POST_SCALE_UP`. La funcion identifica la task definition de la revision objetivo, consulta solamente sus tasks `RUNNING` y prueba sus IP privadas. No usa el endpoint compartido del ALB, porque durante un deployment ese endpoint podria responder desde la revision anterior.
+```bash
+make destroy ENV=dev
+```
 
-Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa. El circuit breaker del servicio cubre fallas que ocurren antes de `POST_SCALE_UP`, como una imagen que no inicia o una task que nunca supera el health check del ALB. Los servicios usan `wait_for_steady_state`, por lo que `terraform apply` y el job de GitHub Actions esperan el resultado del deployment en vez de terminar apenas ECS acepta la actualizacion.
+Este comando elimina la infraestructura runtime del ambiente seleccionado, pero no elimina los repositorios ECR del stack `infra/registry` ni el backend remoto del stack `infra/bootstrap`. Para una limpieza completa local, el orden recomendado es:
 
-El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. ECS usa un rol separado con trust para `ecs.amazonaws.com` y permiso `lambda:InvokeFunction`. Terraform crea ese rol por defecto; en un laboratorio que no permita crear IAM se debe proporcionar uno existente mediante `TF_VAR_ecs_hook_role_arn`.
+```bash
+make destroy ENV=dev
+make registry-destroy ENV=dev
+make bootstrap-destroy
+```
 
-La suscripcion por email de SNS debe confirmarse desde el correo configurado en `alerta_email`. El codigo, contrato del evento y comandos de verificacion estan documentados en `infra/modules/lambda/README.md`.
+Los comandos de destruccion no son usados por los pipelines y requieren confirmacion interactiva, salvo que se pase `AUTO_APPROVE=-auto-approve`.
 
 ## Password del panel admin
 
@@ -108,6 +133,16 @@ Para ejecuciones manuales fuera de GitHub Actions se puede pasar el valor con un
 ```bash
 TF_VAR_admin_password='admin' make apply ENV=dev
 ```
+
+## Guardia de despliegue ECS
+
+Cada servicio ECS ejecuta la Lambda `deployment-validator` en `POST_SCALE_UP`. La funcion identifica la task definition de la revision objetivo, consulta solamente sus tasks `RUNNING` y prueba sus IP privadas. No usa el endpoint compartido del ALB, porque durante un deployment ese endpoint podria responder desde la revision anterior.
+
+Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa. El circuit breaker del servicio cubre fallas que ocurren antes de `POST_SCALE_UP`, como una imagen que no inicia o una task que nunca supera el health check del ALB. Los servicios usan `wait_for_steady_state`, por lo que `terraform apply` y el job de GitHub Actions esperan el resultado del deployment en vez de terminar apenas ECS acepta la actualizacion.
+
+El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. ECS usa un rol separado con trust para `ecs.amazonaws.com` y permiso `lambda:InvokeFunction`. Terraform crea ese rol por defecto; en un laboratorio que no permita crear IAM se debe proporcionar uno existente mediante `TF_VAR_ecs_hook_role_arn`.
+
+La suscripcion por email de SNS debe confirmarse desde el correo configurado en `alerta_email`. El codigo, contrato del evento y comandos de verificacion estan documentados en `infra/modules/lambda/README.md`.
 
 ## Nota sobre PostgreSQL
 
