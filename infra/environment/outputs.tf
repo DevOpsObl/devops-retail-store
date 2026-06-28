@@ -60,6 +60,11 @@ output "secret_arn" {
 
 # Nombre de la Lambda de automatizacion operativa.
 output "lambda_function_name" {
-  description = "Lambda de automatizacion."
+  description = "Lambda guardia de despliegues ECS."
   value       = module.lambda.function_name
+}
+
+output "deployment_alert_topic_arn" {
+  description = "Tema SNS para despliegues rechazados por el guardia Lambda."
+  value       = module.lambda.alert_topic_arn
 }

@@ -145,3 +145,15 @@ variable "alerta_email" {
   type        = string
   default     = "FC319295@fi365.ort.edu.uy"
 }
+
+variable "ecs_hook_role_arn" {
+  description = "Rol IAM existente con trust ecs.amazonaws.com y lambda:InvokeFunction. Si es null, Terraform crea uno."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.ecs_hook_role_arn == null || trimspace(var.ecs_hook_role_arn) != ""
+    error_message = "ecs_hook_role_arn debe ser null o un ARN no vacio."
+  }
+}

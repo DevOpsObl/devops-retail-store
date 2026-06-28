@@ -8,7 +8,7 @@ Esta carpeta implementa la arquitectura definida en `docs/infrastructure.md`:
 - VPC con subredes publicas y privadas, Internet Gateway y NAT Gateway.
 - Amazon RDS PostgreSQL y Amazon ElastiCache Redis en subredes privadas.
 - AWS Secrets Manager para credenciales generadas por Terraform.
-- CloudWatch Logs y una Lambda de automatizacion.
+- CloudWatch Logs y una Lambda que actua como guardia de despliegues ECS.
 - Uso del rol IAM `LabRole` del laboratorio AWS.
 
 ## Bootstrap del estado remoto
@@ -84,6 +84,16 @@ make plan ENV=prod
 ```
 
 Luego de crear ECR con `infra/registry`, publicar las imagenes Docker usando los repositorios del output `ecr_repository_urls`. El pipeline publica cada imagen con el SHA del commit y tambien con `latest`; ECS despliega el tag definido en `image_tag`, por defecto `latest`.
+
+## Guardia de despliegue ECS
+
+Cada servicio ECS ejecuta la Lambda `deployment-validator` en `POST_SCALE_UP`. La funcion identifica la task definition de la revision objetivo, consulta solamente sus tasks `RUNNING` y prueba sus IP privadas. No usa el endpoint compartido del ALB, porque durante un deployment ese endpoint podria responder desde la revision anterior.
+
+Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa. El circuit breaker del servicio cubre fallas que ocurren antes de `POST_SCALE_UP`, como una imagen que no inicia o una task que nunca supera el health check del ALB. Los servicios usan `wait_for_steady_state`, por lo que `terraform apply` y el job de GitHub Actions esperan el resultado del deployment en vez de terminar apenas ECS acepta la actualizacion.
+
+El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. ECS usa un rol separado con trust para `ecs.amazonaws.com` y permiso `lambda:InvokeFunction`. Terraform crea ese rol por defecto; en un laboratorio que no permita crear IAM se debe proporcionar uno existente mediante `TF_VAR_ecs_hook_role_arn`.
+
+La suscripcion por email de SNS debe confirmarse desde el correo configurado en `alerta_email`. El codigo, contrato del evento y comandos de verificacion estan documentados en `infra/modules/lambda/README.md`.
 
 ## Password del panel admin
 
