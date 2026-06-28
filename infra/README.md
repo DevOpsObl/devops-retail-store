@@ -138,9 +138,9 @@ TF_VAR_admin_password='admin' make apply ENV=dev
 
 Cada servicio ECS ejecuta la Lambda `deployment-validator` en `POST_SCALE_UP`. La funcion identifica la task definition de la revision objetivo, consulta solamente sus tasks `RUNNING` y prueba sus IP privadas. No usa el endpoint compartido del ALB, porque durante un deployment ese endpoint podria responder desde la revision anterior.
 
-Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa. El circuit breaker del servicio cubre fallas que ocurren antes de `POST_SCALE_UP`, como una imagen que no inicia o una task que nunca supera el health check del ALB. Los servicios usan `wait_for_steady_state`, por lo que `terraform apply` y el job de GitHub Actions esperan el resultado del deployment en vez de terminar apenas ECS acepta la actualizacion.
+Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa.
 
-El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. ECS usa un rol separado con trust para `ecs.amazonaws.com` y permiso `lambda:InvokeFunction`. Terraform crea ese rol por defecto; en un laboratorio que no permita crear IAM se debe proporcionar uno existente mediante `TF_VAR_ecs_hook_role_arn`.
+El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. El ambiente reutiliza `LabRole` como rol del hook y concede `lambda:InvokeFunction` exclusivamente sobre la funcion mediante su policy basada en recursos, evitando crear o modificar recursos IAM en el laboratorio.
 
 La suscripcion por email de SNS debe confirmarse desde el correo configurado en `alerta_email`. El codigo, contrato del evento y comandos de verificacion estan documentados en `infra/modules/lambda/README.md`.
 

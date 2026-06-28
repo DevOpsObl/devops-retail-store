@@ -238,19 +238,8 @@ resource "aws_ecs_service" "service" {
   desired_count   = each.value.desired_count
   launch_type     = "FARGATE"
 
-  # Hace que terraform apply (y por lo tanto GitHub Actions) espere el resultado
-  # del deployment, incluido el lifecycle hook, antes de finalizar el job.
-  wait_for_steady_state = true
-
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
-
-  # Cubre fallas de arranque que ocurren antes de que ECS llegue a invocar
-  # el hook POST_SCALE_UP (imagen invalida, crash loop o health check del ALB).
-  deployment_circuit_breaker {
-    enable   = true
-    rollback = true
-  }
 
   dynamic "deployment_configuration" {
     for_each = var.deployment_hook.enabled ? [1] : []

@@ -27,7 +27,7 @@ pnpm test
 - ECS: `DescribeServiceRevisions`, `ListTasks` y `DescribeTasks`.
 - SNS: `Publish` sobre el topic de alertas de deployment.
 
-El rol configurado en el lifecycle hook es distinto: debe confiar en `ecs.amazonaws.com` y permitir `lambda:InvokeFunction` sobre esta funcion. El modulo lo crea con minimo privilegio salvo que se proporcione `ecs_hook_role_arn`.
+El rol configurado en el lifecycle hook debe confiar en `ecs.amazonaws.com`. Si no se proporciona `ecs_hook_role_arn`, el modulo crea un rol de minimo privilegio con `lambda:InvokeFunction`. Cuando recibe un rol existente, agrega esa autorizacion solamente sobre esta funcion mediante su policy basada en recursos; esto permite reutilizar `LabRole` en laboratorios sin permisos para crear o modificar IAM.
 
 ## Verificacion en AWS
 

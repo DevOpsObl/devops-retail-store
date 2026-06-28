@@ -93,6 +93,17 @@ resource "aws_iam_role_policy" "ecs_hook" {
   })
 }
 
+# En laboratorios sin permisos para modificar IAM, el rol existente obtiene
+# acceso solamente a esta funcion mediante la policy basada en recursos.
+resource "aws_lambda_permission" "existing_ecs_hook" {
+  count = var.ecs_hook_role_arn == null ? 0 : 1
+
+  statement_id  = "AllowEcsDeploymentHookRole"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.deployment_validator.function_name
+  principal     = var.ecs_hook_role_arn
+}
+
 locals {
   ecs_hook_role_arn = coalesce(var.ecs_hook_role_arn, try(aws_iam_role.ecs_hook[0].arn, null))
 }

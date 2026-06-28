@@ -326,7 +326,7 @@ module "ecs" {
   }
   tags = local.common_tags
 
-  depends_on = [module.secrets]
+  depends_on = [module.secrets, module.lambda]
 }
 
 # Crea una Lambda simple para automatizaciones operativas programadas.
@@ -335,7 +335,7 @@ module "lambda" {
 
   name_prefix        = local.name_prefix
   lab_role_arn       = data.aws_iam_role.lab_role.arn
-  ecs_hook_role_arn  = var.ecs_hook_role_arn
+  ecs_hook_role_arn  = coalesce(var.ecs_hook_role_arn, data.aws_iam_role.lab_role.arn)
   subnet_ids         = module.networking.private_subnet_ids
   security_group_ids = [module.security.lambda_sg_id]
   alert_email        = var.alerta_email
