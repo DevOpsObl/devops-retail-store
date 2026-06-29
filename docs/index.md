@@ -13,6 +13,7 @@ Documentacion del proyecto obligatorio basada en la aplicacion Retail Store.
 - [Calidad de codigo](./calidad.md)
 - [DevSecOps](./dev-sec-ops.md)
 - [Observabilidad](./observabilidad.md)
+- [Lecciones aprendidas](./lecciones-aprendidas.md)
 
 ## Referencias rapidas
 
