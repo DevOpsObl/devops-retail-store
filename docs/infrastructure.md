@@ -150,6 +150,8 @@ RDS y ElastiCache se ubicaran en subredes privadas y solo aceptaran conexiones d
 
 La instancia RDS PostgreSQL alojara las bases `orders`, `catalogdb` y `cartdb`. RDS crea inicialmente `orders`; antes de levantar los servicios de aplicacion, Terraform ejecutara una task one-shot de ECS llamada `db-init` dentro de las subredes privadas para crear `catalogdb`, `cartdb`, aplicar permisos y preparar la tabla inicial de carrito cuando corresponda.
 
+El servicio `admin` se conecta directamente a PostgreSQL para consultar `catalogdb` y `orders`. En el ambiente de laboratorio se mantiene `PGSSLMODE=require` para cifrar la conexion hacia RDS, pero el contenedor Node no incluye el bundle de certificados CA de Amazon RDS. Por ese motivo se configura el cliente `pg` con `rejectUnauthorized: false`: la conexion sigue viajando por TLS, aunque no se valida la cadena de confianza del certificado. Esta decision evita el error `SELF_SIGNED_CERT_IN_CHAIN` observado en CloudWatch durante el despliegue de `develop`. Para un ambiente productivo, la alternativa recomendada es incluir el CA bundle de RDS en la imagen y usar `rejectUnauthorized: true`.
+
 ## Seguridad de red
 
 Se definiran security groups separados:
