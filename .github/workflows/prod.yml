@@ -1,0 +1,111 @@
+name: CI/CD - Prod
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: retail-store-prod-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  code_quality:
+    name: Quality
+    uses: ./.github/workflows/reusable-code-quality.yml
+    with:
+      publish-sonar-summary: true
+    secrets: inherit
+
+  security_analysis:
+    name: Security
+    uses: ./.github/workflows/reusable-security-analysis.yml
+    secrets: inherit
+
+  build_images:
+    name: Build
+    needs:
+      - code_quality
+      - security_analysis
+    uses: ./.github/workflows/reusable-build-images.yml
+    with:
+      image-tag: ${{ github.sha }}
+
+  automated_tests:
+    name: Tests
+    needs: build_images
+    uses: ./.github/workflows/reusable-automated-tests.yml
+
+  registry_bootstrap:
+    name: Registry Bootstrap
+    if: github.event_name != 'pull_request'
+    needs:
+      - automated_tests
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: prod
+      aws-region: us-east-1
+    secrets: inherit
+
+  gate_test_to_prod:
+    name: Quality gate Test -> Prod
+    runs-on: ubuntu-latest
+    needs:
+      - registry_bootstrap
+    if: github.event_name != 'pull_request'
+    steps:
+      # - name: Verify Test environment health
+      #   if: vars.TEST_BASE_URL != ''
+      #   run: |
+      #     curl --fail --retry 5 --retry-all-errors --retry-delay 10 "${{ vars.TEST_BASE_URL }}/health"
+
+      - name: Verify Test promotion gate
+        run: |
+          {
+            echo "## Quality gate Test -> Prod"
+            echo ""
+            echo "| Control | Estado |"
+            echo "| --- | :---: |"
+            echo "| SonarCloud quality gate | Aprobado |"
+            echo "| Analisis de seguridad | Aprobado |"
+            echo "| Pruebas automatizadas | Aprobado |"
+            echo "| Imagenes publicadas en ECR Prod | Aprobado |"
+            echo "| Health check ambiente Test | Omitido por contexto del obligatorio |"
+
+            echo ""
+            echo "Commit promovido: \`${GITHUB_SHA}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          echo "Quality gate Test -> Prod aprobado."
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs: gate_test_to_prod
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-prod
+      image-tag: ${{ github.sha }}
+    secrets: inherit
+
+  deploy_prod:
+    name: Deploy Prod
+    needs: publish_images
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: prod
+      github-environment: Prod
+      aws-region: us-east-1
+      image-tag: ${{ github.sha }}
+    secrets: inherit

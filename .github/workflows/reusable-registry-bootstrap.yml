@@ -1,0 +1,58 @@
+name: Registry Bootstrap
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      aws-region:
+        required: true
+        type: string
+      terraform-version:
+        required: false
+        type: string
+        default: "1.12.0"
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+
+jobs:
+  bootstrap_registry:
+    name: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      TF_ENV: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+
+      - name: Terraform init registry
+        run: make registry-init ENV="${TF_ENV}"
+
+      - name: Terraform validate registry
+        run: make registry-validate
+
+      - name: Terraform plan registry
+        run: make registry-plan ENV="${TF_ENV}"
+
+      - name: Terraform apply registry
+        run: make registry-apply ENV="${TF_ENV}" AUTO_APPROVE="-auto-approve"

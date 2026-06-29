@@ -1,0 +1,82 @@
+name: CI/CD - Develop
+
+on:
+  pull_request:
+    branches:
+      - develop
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+concurrency:
+  group: retail-store-develop-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+  security-events: write
+
+jobs:
+  code_quality:
+    name: Quality
+    uses: ./.github/workflows/reusable-code-quality.yml
+    secrets: inherit
+
+  security_analysis:
+    name: Security
+    uses: ./.github/workflows/reusable-security-analysis.yml
+    secrets: inherit
+
+  build_images:
+    name: Build
+    needs: 
+      - security_analysis
+      - code_quality
+    uses: ./.github/workflows/reusable-build-images.yml
+    with:
+      image-tag: ${{ github.sha }}
+
+  automated_tests:
+    name: Tests
+    needs: build_images
+    uses: ./.github/workflows/reusable-automated-tests.yml
+
+  registry_bootstrap:
+    name: Registry Bootstrap
+    if: github.event_name != 'pull_request'
+    needs:
+      - code_quality
+      - security_analysis
+      - automated_tests
+    uses: ./.github/workflows/reusable-registry-bootstrap.yml
+    with:
+      environment: dev
+      aws-region: us-east-1
+    secrets: inherit
+
+  publish_images:
+    name: Publish
+    if: github.event_name != 'pull_request'
+    needs:
+      - registry_bootstrap
+      - automated_tests
+    uses: ./.github/workflows/reusable-publish-images.yml
+    with:
+      aws-region: us-east-1
+      ecr-repository-prefix: devops-retail-store-dev
+      image-tag: ${{ github.sha }}
+    secrets: inherit
+
+  deploy_dev:
+    name: Deploy Dev
+    needs: publish_images
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/reusable-deploy.yml
+    with:
+      environment: dev
+      github-environment: Develop
+      aws-region: us-east-1
+      image-tag: ${{ github.sha }}
+    secrets: inherit

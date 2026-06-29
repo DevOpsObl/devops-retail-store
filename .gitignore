@@ -1,0 +1,13 @@
+node_modules/
+dist/
+
+# Yarn local artifacts/cache
+.pnp.*
+**/.yarn/*
+!**/.yarn/releases/
+!**/.yarn/releases/**
+!.yarnrc.yml
+
+# reportes de newman, se generan en cada ejecucion
+reports/newman/
+reports/allure-results/
