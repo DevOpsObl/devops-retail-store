@@ -147,7 +147,7 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
   for_each = var.services
 
   name           = "errores-${each.key}"
-  log_group_name = lcoal.log_group_name_list[each.key]
+  log_group_name = var.log_group_names[each.key]
   pattern = lookup({
     "catalog"  = "?error ?ERROR ?Error"
     "orders"   = "?error ?ERROR ?Error"
