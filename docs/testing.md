@@ -2,10 +2,9 @@
 
 Este documento describe la estrategia de testing aplicada al proyecto **DevOps Retail Store**.
 
-La solución busca validar automáticamente el comportamiento de los principales microservicios antes de promover una versión entre los ambientes **Dev**, **Test** y **Prod**.
+La solución valida automáticamente el comportamiento de los principales microservicios antes de promover una versión entre los ambientes **Dev**, **Test** y **Prod**.
 
-> Estado del documento: en elaboración.
-> Las secciones de resultados, hallazgos, correcciones y evidencias se completarán luego de ejecutar las pruebas sobre el proyecto.
+El detalle de resultados, hallazgos, remediaciones y evidencias se documenta en [Informe de testing](./informes/informe-testing.md).
 
 ## 1. Objetivo
 
@@ -68,41 +67,41 @@ La colección de Postman se organizará en grupos según el microservicio o fluj
 
 ### 4.1. Disponibilidad de servicios
 
-| ID      | Caso                               | Resultado esperado                        | Estado    |
-| ------- | ---------------------------------- | ----------------------------------------- | --------- |
-| DISP-01 | Consultar la aplicación principal. | La aplicación responde sin errores `5xx`. | Pendiente |
-| DISP-02 | Consultar el servicio de catálogo. | El servicio responde correctamente.       | Pendiente |
-| DISP-03 | Consultar el servicio de carritos. | El servicio responde correctamente.       | Pendiente |
-| DISP-04 | Consultar el servicio de checkout. | El servicio responde correctamente.       | Pendiente |
-| DISP-05 | Consultar el servicio de órdenes.  | El servicio responde correctamente.       | Pendiente |
+| ID      | Caso                               | Resultado esperado                        | Estado   |
+| ------- | ---------------------------------- | ----------------------------------------- | -------- |
+| DISP-01 | Consultar la aplicación principal. | La aplicación responde sin errores `5xx`. | Cubierto |
+| DISP-02 | Consultar el servicio de catálogo. | El servicio responde correctamente.       | Cubierto |
+| DISP-03 | Consultar el servicio de carritos. | El servicio responde correctamente.       | Cubierto |
+| DISP-04 | Consultar el servicio de checkout. | El servicio responde correctamente.       | Cubierto |
+| DISP-05 | Consultar el servicio de órdenes.  | El servicio responde correctamente.       | Cubierto |
 
 ### 4.2. Catálogo
 
-| ID     | Caso                               | Resultado esperado                                               | Estado    |
-| ------ | ---------------------------------- | ---------------------------------------------------------------- | --------- |
-| CAT-01 | Obtener el listado de productos.   | Se obtiene una respuesta exitosa con una colección de productos. | Pendiente |
-| CAT-02 | Obtener un producto existente.     | Se devuelve el producto solicitado.                              | Pendiente |
-| CAT-03 | Consultar un producto inexistente. | Se devuelve una respuesta controlada, sin error interno.         | Pendiente |
+| ID     | Caso                               | Resultado esperado                                               | Estado   |
+| ------ | ---------------------------------- | ---------------------------------------------------------------- | -------- |
+| CAT-01 | Obtener el listado de productos.   | Se obtiene una respuesta exitosa con una colección de productos. | Cubierto |
+| CAT-02 | Obtener un producto existente.     | Se devuelve el producto solicitado.                              | Cubierto |
+| CAT-03 | Consultar un producto inexistente. | Se devuelve una respuesta controlada, sin error interno.         | Cubierto |
 
 ### 4.3. Carrito
 
-| ID      | Caso                             | Resultado esperado                                      | Estado    |
-| ------- | -------------------------------- | ------------------------------------------------------- | --------- |
-| CART-01 | Crear o inicializar un carrito.  | Se genera un carrito válido.                            | Pendiente |
-| CART-02 | Agregar un producto existente.   | El producto queda asociado al carrito.                  | Pendiente |
-| CART-03 | Consultar el carrito.            | Se visualizan los productos agregados.                  | Pendiente |
-| CART-04 | Agregar un producto inexistente. | La aplicación rechaza la operación de forma controlada. | Pendiente |
+| ID      | Caso                             | Resultado esperado                                      | Estado   |
+| ------- | -------------------------------- | ------------------------------------------------------- | -------- |
+| CART-01 | Crear o inicializar un carrito.  | Se genera un carrito válido.                            | Cubierto |
+| CART-02 | Agregar un producto existente.   | El producto queda asociado al carrito.                  | Cubierto |
+| CART-03 | Consultar el carrito.            | Se visualizan los productos agregados.                  | Cubierto |
+| CART-04 | Agregar un producto inexistente. | La aplicación rechaza la operación de forma controlada. | Cubierto |
 
 ### 4.4. Checkout y órdenes
 
-| ID       | Caso                                                  | Resultado esperado                               | Estado    |
-| -------- | ----------------------------------------------------- | ------------------------------------------------ | --------- |
-| CHECK-01 | Iniciar checkout con un carrito válido.               | El proceso se inicia correctamente.              | Pendiente |
-| CHECK-02 | Ejecutar checkout con un carrito inexistente o vacío. | La aplicación devuelve una respuesta controlada. | Pendiente |
-| ORDER-01 | Completar el checkout.                                | Se genera una orden.                             | Pendiente |
-| ORDER-02 | Consultar la orden generada.                          | La orden contiene los productos procesados.      | Pendiente |
+| ID       | Caso                                                  | Resultado esperado                               | Estado   |
+| -------- | ----------------------------------------------------- | ------------------------------------------------ | -------- |
+| CHECK-01 | Iniciar checkout con un carrito válido.               | El proceso se inicia correctamente.              | Cubierto |
+| CHECK-02 | Ejecutar checkout con un carrito inexistente o vacío. | La aplicación devuelve una respuesta controlada. | Cubierto |
+| ORDER-01 | Completar el checkout.                                | Se genera una orden.                             | Cubierto |
+| ORDER-02 | Consultar la orden generada.                          | La orden contiene los productos procesados.      | Cubierto |
 
-Los nombres exactos de los endpoints, cuerpos de las solicitudes y códigos HTTP esperados se completarán luego de revisar la implementación real de cada microservicio.
+Los endpoints, cuerpos de solicitudes y códigos HTTP esperados se encuentran versionados en la colección `tests/postman/retailstore-integration.postman_collection.json`.
 
 ## 5. Flujo de integración probado
 
@@ -181,9 +180,10 @@ docker compose ps
 
 ```bash
 newman run tests/postman/retailstore-integration.postman_collection.json \
-  --environment tests/postman/environments/dev.postman_environment.json \
-  --reporters cli,junit \
-  --reporter-junit-export reports/newman/dev-results.xml
+  --environment tests/postman/environments/local.postman_environment.json \
+  --reporters cli,junit,htmlextra \
+  --reporter-junit-export reports/newman/local-results.xml \
+  --reporter-htmlextra-export reports/newman/local-results.html
 ```
 
 El comando devolverá un código de salida distinto de cero cuando una prueba o aserción falle.
@@ -196,22 +196,33 @@ docker compose down
 
 ## 7. Integración con GitHub Actions
 
-Las pruebas serán incorporadas como una etapa del pipeline de integración continua.
+Las pruebas están incorporadas como una etapa del pipeline de integración continua.
 
-Ejemplo inicial de ejecución:
+La implementación actual levanta el stack local con Docker Compose, espera los health checks de la UI y Admin, instala Newman y genera reportes JUnit y HTML.
+
+Ejecución equivalente:
 
 ```yaml
+- name: Start local services
+  run: docker compose up -d --build
+
+- name: Wait for application health checks
+  run: |
+    curl --fail --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8080/health
+    curl --fail --retry 30 --retry-all-errors --retry-delay 5 http://localhost:8081/health
+
 - name: Install Newman
-  run: npm install --global newman
+  run: npm install --global newman newman-reporter-htmlextra
 
 - name: Run integration tests
   run: |
     mkdir -p reports/newman
 
     newman run tests/postman/retailstore-integration.postman_collection.json \
-      --environment tests/postman/environments/test.postman_environment.json \
-      --reporters cli,junit \
-      --reporter-junit-export reports/newman/test-results.xml
+      --environment tests/postman/environments/local.postman_environment.json \
+      --reporters cli,junit,htmlextra \
+      --reporter-junit-export reports/newman/local-results.xml \
+      --reporter-htmlextra-export reports/newman/local-results.html
 ```
 
 El reporte generado deberá almacenarse como artefacto del workflow:
@@ -219,9 +230,9 @@ El reporte generado deberá almacenarse como artefacto del workflow:
 ```yaml
 - name: Upload Newman report
   if: always()
-  uses: actions/upload-artifact@v4
+  uses: actions/upload-artifact@v7
   with:
-    name: newman-test-results
+    name: newman-local-test-results
     path: reports/newman/
 ```
 
@@ -229,13 +240,13 @@ El uso de `if: always()` permitirá conservar el reporte incluso cuando las prue
 
 ### 7.1. Ejecución por ambiente
 
-| Rama      | Ambiente | Pruebas                                                |
-| --------- | -------- | ------------------------------------------------------ |
-| `develop` | Dev      | Pruebas funcionales y smoke tests.                     |
-| `testing` | Test     | Suite completa de integración.                         |
-| `main`    | Prod     | Smoke tests no destructivos posteriores al despliegue. |
+| Rama      | Ambiente | Pruebas actuales                                      |
+| --------- | -------- | ----------------------------------------------------- |
+| `develop` | Dev      | Suite automatizada contra stack local en el runner.   |
+| `testing` | Test     | Suite automatizada contra stack local en el runner.   |
+| `main`    | Prod     | Suite automatizada contra stack local en el runner.   |
 
-Las pruebas de producción evitarán operaciones que generen datos permanentes, salvo que se implemente un mecanismo de limpieza o datos específicos para testing.
+Las ejecuciones contra el ALB de cada ambiente quedan como mejora futura. Cuando se incorporen, deberán usar ambientes Postman específicos para `dev`, `test` y `prod`, evitando operaciones destructivas o datos permanentes en producción.
 
 ## 8. Quality gate de pruebas funcionales
 
@@ -248,7 +259,7 @@ El pipeline será bloqueado cuando ocurra alguna de las siguientes condiciones:
 * Una solicitud crítica supera los `2000 ms`.
 * Newman finaliza con un código de salida distinto de cero.
 
-El objetivo será obtener:
+El objetivo es obtener:
 
 ```text
 100 % de pruebas críticas aprobadas
@@ -265,7 +276,7 @@ feature/* → develop → testing → main
 La promoción hacia `testing` requerirá:
 
 * Build correcto.
-* Despliegue correcto en Dev.
+* Controles de calidad y seguridad aprobados.
 * Pruebas funcionales aprobadas.
 
 La promoción hacia `main` requerirá:
@@ -278,39 +289,31 @@ Los criterios de análisis estático y calidad de código se documentan por sepa
 
 ## 10. Resultados obtenidos
 
-Esta sección se completará luego de ejecutar las pruebas.
+La suite actual fue validada en ambiente local con Docker Compose y ejecutada con Newman. El resultado final documentado fue de **24 requests** y **50/50 assertions aprobadas**.
 
-| Fecha     | Ambiente | Pruebas ejecutadas | Aprobadas |  Fallidas | Resultado |
-| --------- | -------- | -----------------: | --------: | --------: | --------- |
-| Pendiente | Dev      |          Pendiente | Pendiente | Pendiente | Pendiente |
-| Pendiente | Test     |          Pendiente | Pendiente | Pendiente | Pendiente |
-| Pendiente | Prod     |          Pendiente | Pendiente | Pendiente | Pendiente |
+| Fecha            | Ambiente | Pruebas ejecutadas | Aprobadas | Fallidas | Resultado |
+| ---------------- | -------- | -----------------: | --------: | -------: | --------- |
+| 24/06/2026       | Local    |        50 assertions |        50 |        0 | Aprobado  |
 
 ## 11. Hallazgos significativos
 
-Esta sección se completará con los problemas reales encontrados durante las pruebas.
+Los hallazgos reales se detallan en [Informe de testing](./informes/informe-testing.md). Los principales fueron:
 
-Cada hallazgo deberá registrar:
-
-* Identificador.
-* Descripción.
-* Ambiente donde fue detectado.
-* Severidad.
-* Evidencia.
-* Impacto.
-* Estado.
-
-| ID        | Hallazgo                | Severidad | Ambiente  | Estado    |
-| --------- | ----------------------- | --------- | --------- | --------- |
-| Pendiente | Pendiente de ejecución. | Pendiente | Pendiente | Pendiente |
+| ID | Hallazgo | Estado |
+| -- | -------- | ------ |
+| TEST-01 | Rutas de administración ejecutadas contra el puerto incorrecto. | Corregido |
+| TEST-02 | Variables Postman sin resolver o leídas desde un alcance incorrecto. | Corregido |
+| TEST-03 | Regresión del servicio Cart por incompatibilidad entre FastAPI, Starlette e instrumentación Prometheus. | Corregido |
 
 ## 12. Remediaciones aplicadas
 
-Las correcciones realizadas se documentarán indicando el hallazgo asociado y la evidencia de su validación.
+Las remediaciones aplicadas y sus evidencias están consolidadas en [Informe de testing](./informes/informe-testing.md).
 
-| Hallazgo  | Remediación             | Pull Request o commit | Resultado |
-| --------- | ----------------------- | --------------------- | --------- |
-| Pendiente | Pendiente de ejecución. | Pendiente             | Pendiente |
+| Hallazgo | Remediación | Resultado |
+| -------- | ----------- | --------- |
+| TEST-01 | Se alinearon las URLs administrativas con `adminBaseUrl=http://localhost:8081`. | Aprobado |
+| TEST-02 | Se corrigió el uso de variables de ambiente y colección en Postman. | Aprobado |
+| TEST-03 | Se fijaron versiones compatibles de FastAPI, Starlette y `prometheus-fastapi-instrumentator`. | Aprobado |
 
 ## 13. Recomendaciones de mejora
 
@@ -330,31 +333,23 @@ Estas recomendaciones podrán ajustarse según los resultados obtenidos.
 
 ## 14. Evidencias y capturas
 
-Las evidencias se almacenarán dentro del repositorio.
+Las evidencias se almacenan dentro del repositorio.
 
-Estructura propuesta:
+Estructura utilizada:
 
 ```text
 docs/
 ├── testing.md
+├── informes/
+│   └── informe-testing.md
 └── assets/
-    └── testing/
+    └── informe-testing/
         ├── newman-dev.png
-        ├── newman-test.png
         ├── github-actions-testing.png
-        └── hallazgos/
+        └── 2026-06-24_20h25_43.png
 ```
 
-Se deberán incluir como mínimo:
-
-1. Ejecución local de Newman.
-2. Resultado de las pruebas en Dev.
-3. Resultado de las pruebas en Test.
-4. Etapa de testing dentro de GitHub Actions.
-5. Ejemplo de pipeline bloqueado ante una prueba fallida.
-6. Evidencia de una remediación aplicada.
-
-Las imágenes se agregarán al documento una vez obtenidas:
+Ejemplos de evidencias:
 
 ```markdown
 ![Resultado de Newman en Dev](assets/informe-testing/newman-dev.png)
@@ -371,10 +366,7 @@ tests/
 └── postman/
     ├── retailstore-integration.postman_collection.json
     └── environments/
-        ├── local.postman_environment.json
-        ├── dev.postman_environment.json
-        ├── test.postman_environment
-        └── prod.postman_environment.json
+        └── local.postman_environment.json
 
 reports/
 └── newman/
@@ -382,7 +374,7 @@ reports/
 docs/
 ├── testing.md
 └── assets/
-    └── testing/
+    └── informe-testing/
 ```
 
-Los archivos de resultados generados por el pipeline no deberán versionarse, salvo que sean seleccionados expresamente como evidencia final del obligatorio.
+Los archivos de resultados generados por el pipeline no deberán versionarse, salvo que sean seleccionados expresamente como evidencia final del obligatorio. Los ambientes Postman para `dev`, `test` y `prod` quedan como mejora futura para pruebas contra ALB.

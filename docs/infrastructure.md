@@ -83,15 +83,15 @@ Esta separacion evita una dependencia circular del primer despliegue. Las imagen
 El flujo esperado de CI/CD sera:
 
 ```text
+code_quality + security_analysis
 build_images
 automated_tests
-code_quality + security_analysis
 registry_bootstrap
 publish_images
 deploy
 ```
 
-`registry_bootstrap` ejecutara el stack `infra/registry`. Luego `publish_images` subira las imagenes Docker al ECR correspondiente. Finalmente `deploy` ejecutara `infra/environment`, que configura ECS usando el `image_tag` ya publicado.
+`code_quality` y `security_analysis` ejecutan los controles de SonarCloud, Semgrep, Trivy y Gitleaks. Luego `build_images` construye y analiza las imagenes, `automated_tests` ejecuta la suite Newman contra el stack local, `registry_bootstrap` aplica el stack `infra/registry`, `publish_images` sube las imagenes Docker al ECR correspondiente y finalmente `deploy` ejecuta `infra/environment`, que configura ECS usando el `image_tag` ya publicado.
 
 Se evaluo una alternativa donde el bootstrap levantara toda la infraestructura posible antes de publicar imagenes, dejando para `deploy` solo la creacion de ECS y el despliegue de aplicaciones. Esa opcion se descarto porque el ALB y sus reglas necesitan conectarse con target groups y servicios ECS para completar el enrutamiento operativo. Si los servicios no existen todavia, la infraestructura queda parcialmente creada pero sin una vinculacion completa entre balanceador y aplicaciones; ademas, al crear servicios ECS antes de publicar imagenes se vuelve al problema original de tareas intentando descargar tags inexistentes. Por eso se mantuvo un bootstrap acotado al registry y el despliegue runtime completo se realiza despues de publicar las imagenes.
 

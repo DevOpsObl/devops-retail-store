@@ -158,9 +158,12 @@ En despliegues ECS, estas credenciales se inyectan desde AWS Secrets Manager. El
 ## Estructura del repositorio
 
 ```
-app/
+.
 ├── docker-compose.yml
 ├── init-db.sql
+├── infra/              # Terraform para bootstrap, registry y runtime
+├── docs/               # Documentación e informes del proyecto
+├── tests/              # Colecciones Postman y ambientes de prueba
 └── src/
     ├── catalog/        # Go - Catálogo de productos
     ├── cart/           # Python - Carrito de compras
