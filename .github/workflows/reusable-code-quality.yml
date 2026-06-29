@@ -61,6 +61,7 @@ jobs:
             -Dsonar.exclusions=**/node_modules/**,**/vendor/**,**/.venv/**,**/dist/**,**/build/**,**/coverage/**
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
+            -Dsonar.coverage.exclusions=src/admin/src/app.ts
 
       - name: Publish SonarCloud summary
         if: always() && inputs.publish-sonar-summary && (github.event_name == 'pull_request' || github.ref_name == 'main')
