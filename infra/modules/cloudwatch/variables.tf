@@ -19,6 +19,11 @@ variable "services" {
   type        = set(string)
 }
 
+variable "log_group_names" {
+  description = "Log groups reales por servicio, creados por el modulo monitoring."
+  type        = map(string)
+}
+
 variable "environment" {
   description = "Nombre del ambiente."
   type        = string

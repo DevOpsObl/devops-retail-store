@@ -22,9 +22,9 @@ resource "aws_internet_gateway" "this" {
 resource "aws_subnet" "public" {
   count = length(var.public_subnet_cidrs)
 
-  vpc_id                  = aws_vpc.this.id
-  cidr_block              = var.public_subnet_cidrs[count.index]
-  availability_zone       = var.availability_zones[count.index]
+  vpc_id            = aws_vpc.this.id
+  cidr_block        = var.public_subnet_cidrs[count.index]
+  availability_zone = var.availability_zones[count.index]
   # nosemgrep: terraform.aws.security.aws-subnet-has-public-ip-address
   # Subnet publica destinada solo a ALB/NAT. Las tareas ECS/RDS/Redis se despliegan en subnets privadas.
   map_public_ip_on_launch = true

@@ -83,15 +83,15 @@ Esta separacion evita una dependencia circular del primer despliegue. Las imagen
 El flujo esperado de CI/CD sera:
 
 ```text
+code_quality + security_analysis
 build_images
 automated_tests
-code_quality + security_analysis
 registry_bootstrap
 publish_images
 deploy
 ```
 
-`registry_bootstrap` ejecutara el stack `infra/registry`. Luego `publish_images` subira las imagenes Docker al ECR correspondiente. Finalmente `deploy` ejecutara `infra/environment`, que configura ECS usando el `image_tag` ya publicado.
+`code_quality` y `security_analysis` ejecutan los controles de SonarCloud, Semgrep, Trivy y Gitleaks. Luego `build_images` construye y analiza las imagenes, `automated_tests` ejecuta la suite Newman contra el stack local, `registry_bootstrap` aplica el stack `infra/registry`, `publish_images` sube las imagenes Docker al ECR correspondiente y finalmente `deploy` ejecuta `infra/environment`, que configura ECS usando el `image_tag` ya publicado.
 
 Se evaluo una alternativa donde el bootstrap levantara toda la infraestructura posible antes de publicar imagenes, dejando para `deploy` solo la creacion de ECS y el despliegue de aplicaciones. Esa opcion se descarto porque el ALB y sus reglas necesitan conectarse con target groups y servicios ECS para completar el enrutamiento operativo. Si los servicios no existen todavia, la infraestructura queda parcialmente creada pero sin una vinculacion completa entre balanceador y aplicaciones; ademas, al crear servicios ECS antes de publicar imagenes se vuelve al problema original de tareas intentando descargar tags inexistentes. Por eso se mantuvo un bootstrap acotado al registry y el despliegue runtime completo se realiza despues de publicar las imagenes.
 
@@ -174,13 +174,13 @@ Los secretos se gestionaran de forma segura. No se almacenaran credenciales, cla
 
 El modulo `secrets` crea el secreto `${project_name}-${environment}/app-secrets` en **AWS Secrets Manager** y guarda alli las credenciales generadas para la base de datos y el usuario administrador. Para facilitar la destruccion y recreacion frecuente de ambientes de laboratorio, el secreto se configura con `recovery_window_in_days = 0`. De esta forma, cuando Terraform destruye el ambiente, Secrets Manager elimina el secreto sin dejarlo en estado `scheduled for deletion`, evitando que una ejecucion posterior falle al intentar crear un secreto con el mismo nombre. Si un secreto ya quedo programado para eliminacion antes de aplicar esta configuracion, debe purgarse manualmente con `aws secretsmanager delete-secret --secret-id <nombre-del-secreto> --force-delete-without-recovery --region us-east-1` antes de reintentar el despliegue.
 
-Se incorporara **AWS Lambda** como servicio serverless para automatizaciones operativas y de seguridad. La funcion Lambda procesara eventos de **CloudWatch** para generar alertas, analizar logs de seguridad y notificar eventos relevantes. Terraform creara la funcion, la asociara al rol **`LabRole`** disponible en el laboratorio cuando corresponda, y definira sus permisos de ejecucion y reglas de invocacion.
+Se incorporara **AWS Lambda** como guardia de despliegues ECS. La funcion `deployment-validator` se ejecutara en la etapa `POST_SCALE_UP` de cada servicio, validara solamente las tareas `RUNNING` de la nueva revision mediante sus IP privadas y devolvera `FAILED` cuando la revision no supere los health checks configurados. En ese caso, ECS podra revertir a la ultima revision exitosa y la Lambda publicara el detalle en SNS.
 
 La infraestructura resultante quedara definida, versionada y desplegable mediante Terraform, con separacion por ambientes, modulos reutilizables, estado remoto seguro, manejo protegido de secretos y automatizacion serverless integrada.
 
 ## Outputs
 
-Los outputs mas relevantes se definiran en `infra/registry/outputs.tf` y `infra/environment/outputs.tf`. `registry` expone las URLs de repositorios ECR para publicar imagenes, mientras que `environment` consolida las salidas operativas del ambiente desplegado.
+Los outputs mas relevantes se definiran en `infra/bootstrap/outputs.tf`, `infra/registry/outputs.tf` y `infra/environment/outputs.tf`. `bootstrap` expone el bucket del estado remoto, `registry` expone las URLs de repositorios ECR para publicar imagenes y `environment` consolida las salidas operativas del ambiente desplegado.
 
 | Output | Origen | Uso principal |
 |--------|--------|---------------|
@@ -194,7 +194,8 @@ Los outputs mas relevantes se definiran en `infra/registry/outputs.tf` y `infra/
 | `rds_endpoint` | Modulo `database` | Endpoint de PostgreSQL RDS utilizado por los servicios que requieren persistencia relacional. |
 | `redis_endpoint` | Modulo `redis` | Endpoint y puerto de ElastiCache Redis utilizado por `checkout`. |
 | `secret_arn` | Modulo `secrets` | ARN del secreto de AWS Secrets Manager con credenciales de aplicacion y base de datos. |
-| `lambda_function_name` | Modulo `lambda` | Nombre de la Lambda usada para automatizaciones operativas y de seguridad. |
+| `lambda_function_name` | Modulo `lambda` | Nombre de la Lambda guardia de despliegues ECS. |
+| `deployment_alert_topic_arn` | Modulo `lambda` | ARN del topico SNS usado para alertar despliegues rechazados por la Lambda guardia. |
 | `state_bucket_name` | `infra/bootstrap` | Nombre del bucket S3 creado para almacenar el estado remoto de Terraform. |
 
 Ademas, los modulos internos exponen salidas complementarias como ARNs de repositorios ECR, ARN del cluster ECS, ARNs de target groups, identificador de la instancia RDS, security groups, log groups de CloudWatch y ARN de la Lambda. Estas salidas permiten conectar modulos entre si y realizar tareas de diagnostico, pero no todas necesitan mostrarse como outputs finales del ambiente.

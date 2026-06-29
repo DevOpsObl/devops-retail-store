@@ -2,10 +2,9 @@
 
 Este documento describe la estrategia de análisis de calidad aplicada al proyecto **DevOps Retail Store**.
 
-La calidad de código se validará de forma automática dentro del pipeline de integración continua, como complemento de las pruebas funcionales y de integración documentadas en [Testing](./testing.md).
+La calidad de código se valida de forma automática dentro del pipeline de integración continua, como complemento de las pruebas funcionales y de integración documentadas en [Testing](./testing.md).
 
-> Estado del documento: en elaboración.
-> Las secciones de resultados, hallazgos, correcciones y evidencias se completarán luego de ejecutar los análisis sobre el proyecto.
+El detalle de resultados, hallazgos, decisiones y evidencias se documenta en [Informe de calidad y análisis estático](./informes/informe-calidad.md).
 
 ## 1. Objetivo
 
@@ -38,14 +37,23 @@ El análisis permitirá identificar:
 
 ## 4. Integración con GitHub Actions
 
-El análisis de calidad será incorporado como una etapa del pipeline de integración continua.
+El análisis de calidad está incorporado como una etapa del pipeline de integración continua.
 
-Ejemplo inicial de ejecución:
+SonarCloud se ejecuta en pull requests y en la rama `main`. En pushes a otras ramas, el workflow deja un resumen indicando que el análisis de SonarCloud fue omitido.
+
+Configuración principal:
 
 ```yaml
 - name: Run SonarCloud analysis
-  run: sonar-scanner -Dsonar.qualitygate.wait=true
+  if: github.event_name == 'pull_request' || github.ref_name == 'main'
+  uses: SonarSource/sonarqube-scan-action@v8
+  with:
+    args: >
+      -Dsonar.host.url=https://sonarcloud.io
+      -Dsonar.qualitygate.wait=true
+      -Dsonar.qualitygate.timeout=300
 ```
+
 El uso de `sonar.qualitygate.wait=true` permitirá bloquear el pipeline cuando el quality gate no sea aprobado.
 
 ```yaml
@@ -91,7 +99,6 @@ La promoción hacia `testing` requerirá:
 * Build correcto.
 * Análisis estático aprobado.
 * Controles de seguridad aprobados.
-* Despliegue correcto en Dev.
 * Pruebas funcionales aprobadas.
 
 La promoción hacia `main` requerirá:
@@ -105,30 +112,11 @@ En un ambiente real, el gate de promoción `Test -> Prod` también debería ejec
 
 ## 7. Resultados obtenidos
 
-Esta sección registra los resultados y observaciones obtenidos durante la ejecución de los controles de calidad.
-
-| Métrica                     | Resultado |      Umbral | Cumple    |
-| --------------------------- | --------: | ----------: | --------- |
-| Issues Blocker nuevos       | Pendiente |           0 | Pendiente |
-| Issues Critical nuevos      | Pendiente |           0 | Pendiente |
-| Code smells Major nuevos    | Pendiente |    Máximo 5 | Pendiente |
-| Duplicación en código nuevo | Pendiente | Menor a 5 % | Pendiente |
-| Quality Gate                | Pendiente |    Aprobado | Pendiente |
-| Secretos Gitleaks           | Falso positivo `curl-auth-user` documentado | 0 secretos reales | Cumple con excepción |
+Los resultados y observaciones obtenidos durante la ejecución de los controles de calidad se consolidan en [Informe de calidad y análisis estático](./informes/informe-calidad.md).
 
 ## 8. Hallazgos significativos
 
-Esta sección se completará con los problemas reales encontrados durante el análisis.
-
-Cada hallazgo deberá registrar:
-
-* Identificador.
-* Descripción.
-* Ambiente o rama donde fue detectado.
-* Severidad.
-* Evidencia.
-* Impacto.
-* Estado.
+Los hallazgos reales del análisis se documentan en [Informe de calidad y análisis estático](./informes/informe-calidad.md).
 
 | ID        | Hallazgo                | Severidad | Ambiente o rama | Estado    |
 | --------- | ----------------------- | --------- | --------------- | --------- |
@@ -136,11 +124,12 @@ Cada hallazgo deberá registrar:
 
 ## 9. Remediaciones aplicadas
 
-Las correcciones realizadas se documentarán indicando el hallazgo asociado y la evidencia de su validación.
+Las correcciones y decisiones aplicadas se documentan indicando el hallazgo asociado y la evidencia de validación.
 
-| Hallazgo  | Remediación             | Pull Request o commit | Resultado |
-| --------- | ----------------------- | --------------------- | --------- |
-| Pendiente | Pendiente de ejecución. | Pendiente             | Pendiente |
+| Hallazgo | Remediación | Resultado |
+| -------- | ----------- | --------- |
+| Limitación de SonarCloud | Se mantuvo `Sonar way` y se agregó Semgrep como gate bloqueante configurable. | Aplicado |
+| GIT-001 | Se documentó el falso positivo de Gitleaks y se usó `gitleaks:allow` solo en la línea afectada. | Aplicado |
 
 Cuando un hallazgo no pueda corregirse dentro del alcance del proyecto, deberá documentarse como excepción justificada.
 
@@ -164,32 +153,33 @@ Las recomendaciones iniciales son:
 
 ## 11. Evidencias y capturas
 
-Las evidencias se almacenarán dentro del repositorio.
+Las evidencias se almacenan dentro del repositorio.
 
-Estructura propuesta:
+Estructura utilizada:
 
 ```text
 docs/
 ├── calidad.md
+├── informes/
+│   └── informe-calidad.md
 └── assets/
-    └── calidad/
-        ├── sonar-quality-gate.png
-        ├── github-actions-quality.png
-        └── hallazgos/
+    └── informe-calidad/
+        ├── github-actions-calidad.png
+        ├── 2026-06-21_23h06_59.png
+        ├── 2026-06-22_01h32_06.png
+        └── 2026-06-23_21h34_56.png
 ```
 
-Se deberán incluir como mínimo:
+Las evidencias incluyen:
 
 1. Resultado del análisis de SonarCloud.
-2. Quality Gate de SonarCloud.
+2. Restricción del plan gratuito para Quality Gates personalizados.
 3. Etapa de calidad dentro de GitHub Actions.
-4. Ejemplo de pipeline bloqueado ante un quality gate fallido.
-5. Evidencia de una remediación aplicada.
+4. Clasificación de hallazgos Semgrep.
+5. Evidencia de decisiones y remediaciones aplicadas.
 
-Las imágenes se agregarán al documento una vez obtenidas:
+Ejemplo:
 
 ```markdown
-![Quality Gate de SonarCloud](assets/calidad/sonar-quality-gate.png)
-
-![Ejecución de calidad en GitHub Actions](assets/calidad/github-actions-quality.png)
+![Ejecución de calidad en GitHub Actions](assets/informe-calidad/github-actions-calidad.png)
 ```

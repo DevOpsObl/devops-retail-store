@@ -19,11 +19,13 @@ Se decidió recolectar las métricas de **infraestructura**, para tener un mayor
 
 ## Logs
 
-Los logs de todos los servicios serán centralizados en una única tabla, la cual va a permitir _filtrar_ y _buscar_ los mismos.
+Los logs de los servicios ECS se envían a CloudWatch Logs mediante los log groups creados por el módulo `monitoring`.
+
+El dashboard de CloudWatch consulta esos mismos log groups reales, por lo que la tabla centralizada permite _filtrar_ y _buscar_ eventos de todos los microservicios sin mantener una segunda convención de nombres.
 
 ## Dashboard
 
-Se creará un Dashboard en CloudWatch para centralizar la visualización del estado de la infraestructura.
+Se crea un Dashboard en CloudWatch para centralizar la visualización del estado de la infraestructura.
 
 El dashboard incluye:
 

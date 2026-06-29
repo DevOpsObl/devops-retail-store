@@ -1,11 +1,8 @@
 locals {
-  name_prefix     = "${var.project_name}-${var.environment}"
-  log_group_names = [for k, _ in var.services : "/ecs/${var.environment}/${k}"]
+  name_prefix         = "${var.project_name}-${var.environment}"
+  log_group_name_list = [for service in sort(tolist(var.services)) : var.log_group_names[service]]
 
-  logs_query = join(" ", concat(
-    [for k, _ in var.services : "SOURCE \"/ecs/${var.environment}/${k}\" |"],
-    ["fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"]
-  ))
+  logs_query = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
   alb_health_metrics = [
     for name, tg_arn_suffix in var.target_group_arn_suffixes : [
       "AWS/ApplicationELB", "HealthyHostCount",
@@ -13,13 +10,6 @@ locals {
       "TargetGroup", tg_arn_suffix,
     ]
   ]
-}
-
-resource "aws_cloudwatch_log_group" "servicios" {
-  for_each = var.services
-
-  name              = "/ecs/${var.environment}/${each.key}"
-  retention_in_days = 30
 }
 
 resource "aws_cloudwatch_dashboard" "main" {
@@ -81,7 +71,7 @@ resource "aws_cloudwatch_dashboard" "main" {
           title         = "Logs - Todos los servicios"
           region        = var.aws_region
           view          = "table"
-          logGroupNames = local.log_group_names
+          logGroupNames = local.log_group_name_list
           query         = local.logs_query
         }
       }
@@ -92,7 +82,7 @@ resource "aws_cloudwatch_dashboard" "main" {
 # resource "aws_cloudwatch_query_definition" "logs_servicios" {
 #   name = "${local.name_prefix}-logs-servicios"
 
-#   log_group_names = local.log_group_names
+#   log_group_names = local.log_group_name_list
 
 #   query_string = <<-EOT
 #     fields @timestamp, @logStream, @message
@@ -154,7 +144,7 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
   for_each = var.services
 
   name           = "errores-${each.key}"
-  log_group_name = aws_cloudwatch_log_group.servicios[each.key].name
+  log_group_name = var.log_group_names[each.key]
   pattern = lookup({
     "catalog"  = "?error ?ERROR"
     "orders"   = "?error ?ERROR"
