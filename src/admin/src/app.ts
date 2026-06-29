@@ -22,12 +22,12 @@ const DB_PASS      = process.env.DB_PASSWORD         || 'retailpassword';
 // const dbSsl = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined; // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
 
 const dbSsl =
-  process.env.PGSSLMODE === 'require'
+  process.env.PGSSLMODE === 'require' 
     ? { rejectUnauthorized: false } // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
     : undefined;
 
-const catalogDb = new Pool({ host: DB_HOST, port: DB_PORT, database: 'catalogdb', user: DB_USER, password: DB_PASS, ssl: dbSsl });
-const ordersDb  = new Pool({ host: DB_HOST, port: DB_PORT, database: 'orders',    user: DB_USER, password: DB_PASS, ssl: dbSsl });
+const catalogDb = new Pool({ host: DB_HOST, port: DB_PORT, database: 'catalogdb', user: DB_USER, password: DB_PASS, ssl: dbSsl }); // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
+const ordersDb  = new Pool({ host: DB_HOST, port: DB_PORT, database: 'orders',    user: DB_USER, password: DB_PASS, ssl: dbSsl }); // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
 
 // ── Auth middleware ────────────────────────────────────────────────────────
 
