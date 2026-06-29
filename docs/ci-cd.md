@@ -42,7 +42,7 @@ La estrategia evita duplicar logica usando workflows reutilizables:
 
 ## 3. Estrategia general
 
-El flujo de promocion del codigo sigue la estrategia de ramificacion documentada en [Estrategia de ramificacion](./estrategia-ramificación.md):
+El flujo de promocion del codigo sigue la estrategia de ramificacion documentada en [Estrategia Git](./estrategia-git.md):
 
 ```text
 feature/* -> develop -> testing -> main

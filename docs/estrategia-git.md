@@ -1,4 +1,4 @@
-# Estrategia de ramificación
+# Estrategia Git
 
 Este documento explica la estrategia de ramificación utilizada, desde el porqué se escogió hasta cómo se aplicó.
 
@@ -30,6 +30,16 @@ El flujo de trabajo principal es:
 
 ```text
 feature/* -> develop -> testing -> main
+```
+
+```mermaid
+flowchart LR
+    A[feature/*] -->|Pull request| B[develop]
+    D[docs/*] -->|Pull request| B
+    B -->|Promocion a Test| C[testing]
+    C -->|Promocion estable| E[main]
+    F[hotfix/*] -->|Correccion urgente| E
+    E -->|Sincronizacion de fix| B
 ```
 
 Cada vez que se crea una nueva rama `feature/*`, se espera que esté basada en `develop`. Luego se crea una _pull request_ hacia `develop`, donde el conjunto de funcionalidades se integra y valida técnicamente. Cuando corresponde promover una versión estable, los cambios pasan a `testing`. Una vez que la validación en `testing` finaliza correctamente y no existen errores bloqueantes, se genera una _pull request_ hacia `main`, donde se libera una nueva versión estable del proyecto.
