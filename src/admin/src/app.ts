@@ -19,7 +19,12 @@ const DB_PASS      = process.env.DB_PASSWORD         || 'retailpassword';
 
 // RDS requires TLS in AWS, but this lab image does not ship the RDS CA bundle.
 // Keep the connection encrypted while skipping CA validation for the dev environment.
-const dbSsl = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined; // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
+// const dbSsl = process.env.PGSSLMODE === 'require' ? { rejectUnauthorized: false } : undefined; // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
+
+const dbSsl =
+  process.env.PGSSLMODE === 'require'
+    ? { rejectUnauthorized: false } // NOSONAR -- AWS Academy dev: RDS CA bundle no disponible
+    : undefined;
 
 const catalogDb = new Pool({ host: DB_HOST, port: DB_PORT, database: 'catalogdb', user: DB_USER, password: DB_PASS, ssl: dbSsl });
 const ordersDb  = new Pool({ host: DB_HOST, port: DB_PORT, database: 'orders',    user: DB_USER, password: DB_PASS, ssl: dbSsl });
