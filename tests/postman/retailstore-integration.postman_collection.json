@@ -1,0 +1,900 @@
+{
+  "info": {
+    "_postman_id": "2c2ddca9-b7da-4c8b-9f7e-ad7d4c647a06",
+    "name": "RetailStore",
+    "description": "Primera suite funcional para validar UI/proxy, catálogo, carrito, órdenes y autenticación del panel administrador.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "19570553"
+  },
+  "item": [
+    {
+      "name": "01 - Disponibilidad",
+      "item": [
+        {
+          "name": "DISP-01 - UI health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta OK', () => pm.expect(pm.response.text().trim()).to.eql('OK'));",
+                  "pm.test('Tiempo menor a 2000 ms', () => pm.expect(pm.response.responseTime).to.be.below(2000));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DISP-02 - Admin health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Respuesta OK', () => pm.expect(pm.response.text().trim()).to.eql('OK'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{adminBaseUrl}}/health",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 - Catalog",
+      "item": [
+        {
+          "name": "CAT-01 - Listar productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const products = pm.response.json();",
+                  "pm.test('Devuelve productos', () => pm.expect(products).to.be.an('array').that.is.not.empty);",
+                  "const product = products[0];",
+                  "pm.test('Producto con id, name y price', () => { pm.expect(product).to.have.property('id'); pm.expect(product).to.have.property('name'); pm.expect(product).to.have.property('price'); });",
+                  "pm.environment.set('productId', product.id);",
+                  "pm.environment.set('productName', product.name);",
+                  "pm.environment.set('productPrice', Number(product.price));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/products?page=1&size=5",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "products"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "size",
+                  "value": "5"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CAT-02 - Obtener producto seleccionado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const product = pm.response.json();",
+                  "pm.test('Producto correcto', () => pm.expect(product.id).to.eql(pm.environment.get('productId')));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/products/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "products",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CAT-03 - Tamaño del catálogo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const dataCatalogo = pm.response.json();",
+                  "pm.test('Catálogo no vacío', () => { pm.expect(dataCatalogo).to.have.property('size'); pm.expect(dataCatalogo.size).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/size",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "size"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CAT-04 - Producto inexistente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Respuesta controlada 404', () => pm.response.to.have.status(404));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/catalog/products/PRODUCTO-RANDOM",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "catalog",
+                "products",
+                "PRODUCTO-RANDOM"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 - Cart",
+      "item": [
+        {
+          "name": "CART-00 - Limpiar carrito de prueba",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Limpieza aceptada', () => pm.expect(pm.response.code).to.be.oneOf([200,202,204]));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-01 - Agregar producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const item = pm.response.json();",
+                  "pm.test('Producto agregado', () => { pm.expect(item.itemId).to.eql(pm.environment.get('productId')); pm.expect(item.quantity).to.eql(1); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": \"{{productId}}\",\n  \"quantity\": 1,\n  \"unitPrice\": {{productPrice}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-02 - Consultar carrito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const cart = pm.response.json();",
+                  "pm.test('Cliente correcto', () => pm.expect(cart.customerId).to.eql(pm.variables.get(\"customerId\")));",
+                  "pm.test('Contiene el producto', () => pm.expect(cart.items.some(i => i.itemId === pm.environment.get('productId'))).to.eql(true));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-03 - Actualizar cantidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": \"{{productId}}\",\n  \"quantity\": 2,\n  \"unitPrice\": {{productPrice}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}/items",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}",
+                "items"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-04 - Verificar cantidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Cantidad 2', () => pm.expect(pm.response.json().quantity).to.eql(2));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}/items/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}",
+                "items",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-05 - Eliminar item",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 202', () => pm.response.to.have.status(202));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}/items/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}",
+                "items",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CART-06 - Verificar item eliminado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Devuelve 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/carts/{{customerId}}/items/{{productId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "carts",
+                "{{customerId}}",
+                "items",
+                "{{productId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 - Checkout",
+      "item": [
+        {
+          "name": "CHECKOUT-01 - Iniciar checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const checkout = pm.response.json();",
+                  "const productPrice = Number(pm.environment.get('productPrice'));",
+                  "const expectedSubtotal = productPrice * 2;",
+                  "pm.test('Checkout contiene el producto seleccionado', () => { pm.expect(checkout.items).to.be.an('array').with.lengthOf(1); pm.expect(checkout.items[0].id).to.eql(pm.environment.get('productId')); pm.expect(checkout.items[0].quantity).to.eql(2); });",
+                  "pm.test('Dirección de envío registrada', () => pm.expect(checkout.shippingAddress.email).to.eql('postman-devops-test@example.com'));",
+                  "pm.test('Opción de envío aplicada', () => pm.expect(checkout.deliveryOptionToken).to.eql('priority-mail'));",
+                  "pm.test('Totales calculados', () => { pm.expect(checkout.subtotal).to.eql(expectedSubtotal); pm.expect(checkout.shipping).to.eql(10); pm.expect(checkout.tax).to.eql(5); pm.expect(checkout.total).to.eql(expectedSubtotal + 15); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"id\": \"{{productId}}\",\n      \"name\": \"{{productName}}\",\n      \"quantity\": 2,\n      \"price\": {{productPrice}}\n    }\n  ],\n  \"shippingAddress\": {\n    \"firstName\": \"Postman\",\n    \"lastName\": \"Tester\",\n    \"email\": \"postman-devops-test@example.com\",\n    \"address1\": \"18 de Julio 1234\",\n    \"address2\": \"Apt 101\",\n    \"city\": \"Montevideo\",\n    \"state\": \"Montevideo\",\n    \"zip\": \"11200\"\n  },\n  \"deliveryOptionToken\": \"priority-mail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout/{{customerId}}/update",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "{{customerId}}",
+                "update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CHECKOUT-02 - Consultar checkout iniciado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const checkout = pm.response.json();",
+                  "pm.test('Checkout persistido para el cliente', () => { pm.expect(checkout.items).to.be.an('array').with.lengthOf(1); pm.expect(checkout.items[0].id).to.eql(pm.environment.get('productId')); });",
+                  "pm.test('Incluye tokens de pago generados', () => { pm.expect(checkout.paymentId).to.be.a('string').that.is.not.empty; pm.expect(checkout.paymentToken).to.be.a('string').that.is.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CHECKOUT-03 - Submit de checkout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "const submitted = pm.response.json();",
+                  "pm.test('Orden generada', () => { pm.expect(submitted.orderId).to.be.a('string').that.is.not.empty; pm.environment.set('orderId', submitted.orderId); });",
+                  "pm.test('Resumen de compra correcto', () => { pm.expect(submitted.email).to.eql('postman-devops-test@example.com'); pm.expect(submitted.items).to.be.an('array').with.lengthOf(1); pm.expect(submitted.items[0].id).to.eql(pm.environment.get('productId')); pm.expect(submitted.total).to.be.above(0); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout/{{customerId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "{{customerId}}",
+                "submit"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "CHECKOUT-04 - Checkout cerrado luego del submit",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Devuelve 404', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/checkout/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "checkout",
+                "{{customerId}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 - Orders",
+      "item": [
+        {
+          "name": "ORDER-01 - Listar órdenes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devuelve una lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ORDER-02 - Verificar orden generada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "const orders = pm.response.json();",
+                  "const orderId = pm.environment.get('orderId');",
+                  "const order = orders.find(o => o.id === orderId);",
+                  "pm.test('La orden generada está en el listado', () => pm.expect(order, `No se encontró orderId ${orderId}`).to.exist);",
+                  "pm.test('Datos de la orden generada', () => { pm.expect(order.email).to.eql('postman-devops-test@example.com'); pm.expect(order.items).to.be.an('array').with.lengthOf(1); pm.expect(order.items[0].productId).to.eql(pm.environment.get('productId')); pm.expect(order.items[0].quantity).to.eql(2); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/orders",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "orders"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 - Admin",
+      "item": [
+        {
+          "name": "ADMIN-01 - Login correcto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Login confirmado', () => pm.expect(pm.response.json().ok).to.eql(true));",
+                  "pm.test('Cookie de sesión recibida', () => pm.expect(pm.cookies.has('token')).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            },
+            "url": {
+              "raw": "{{adminBaseUrl}}/auth/login",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ADMIN-02 - Sesión autenticada",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Sesión válida', () => pm.expect(pm.response.json().ok).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{adminBaseUrl}}/auth/me",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ADMIN-03 - Listar productos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devuelve una lista', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{adminBaseUrl}}/admin/api/products",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "api",
+                "products"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ADMIN-04 - Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{adminBaseUrl}}/auth/logout",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ADMIN-05 - Acceso sin sesión",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Acceso rechazado', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{adminBaseUrl}}/auth/me",
+              "host": [
+                "{{adminBaseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}

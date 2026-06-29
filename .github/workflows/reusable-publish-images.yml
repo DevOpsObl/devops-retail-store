@@ -1,0 +1,78 @@
+name: Publicacion de imagenes de contenedor
+
+on:
+  workflow_call:
+    inputs:
+      aws-region:
+        required: true
+        type: string
+      ecr-repository-prefix:
+        required: true
+        type: string
+      image-tag:
+        required: true
+        type: string
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_SESSION_TOKEN:
+        required: false
+
+jobs:
+  publish_images:
+    name: ${{ matrix.service.name }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: Catalog
+            tag_name: catalog
+            path: src/catalog
+          - name: Orders
+            tag_name: orders
+            path: src/orders
+          - name: Checkout
+            tag_name: checkout
+            path: src/checkout
+          - name: UI
+            tag_name: ui
+            path: src/ui
+          - name: Admin
+            tag_name: admin
+            path: src/admin
+          - name: Cart
+            tag_name: cart
+            path: src/cart
+    env:
+      AWS_REGION: ${{ inputs.aws-region }}
+      ECR_REPOSITORY_PREFIX: ${{ inputs.ecr-repository-prefix }}
+      IMAGE_TAG: ${{ inputs.image-tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Login a Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build y push a ECR
+        run: |
+          repository_uri="${{ steps.ecr.outputs.registry }}/${ECR_REPOSITORY_PREFIX}/${{ matrix.service.tag_name }}"
+          sha_image_uri="${repository_uri}:${IMAGE_TAG}"
+          latest_image_uri="${repository_uri}:latest"
+
+          docker build --tag "$sha_image_uri" ${{ matrix.service.path }}
+          docker tag "$sha_image_uri" "$latest_image_uri"
+          docker push "$sha_image_uri"
+          docker push "$latest_image_uri"

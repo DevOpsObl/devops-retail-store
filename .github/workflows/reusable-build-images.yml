@@ -1,0 +1,58 @@
+name: Build de imagenes Docker
+
+on:
+  workflow_call:
+    inputs:
+      image-tag:
+        required: true
+        type: string
+
+jobs:
+  build_images:
+    name: "${{ matrix.service.name }}"
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - name: Catalog
+            tag_name: catalog
+            path: src/catalog
+          - name: Orders
+            tag_name: orders
+            path: src/orders
+          - name: Checkout
+            tag_name: checkout
+            path: src/checkout
+          - name: UI
+            tag_name: ui
+            path: src/ui
+          - name: Admin
+            tag_name: admin
+            path: src/admin
+          - name: Cart
+            tag_name: cart
+            path: src/cart
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build Docker image
+        id: image
+        env: 
+          SERVICE_NAME: ${{ matrix.service.name }} 
+          SERVICE_PATH: ${{ matrix.service.path }} 
+          IMAGE_TAG_INPUT: ${{ inputs.image-tag }}
+        run: |
+          service_name_lower="${SERVICE_NAME,,}"
+          image_tag="retail-${service_name_lower}:${IMAGE_TAG_INPUT}"
+          echo "uri=${image_tag}" >> "$GITHUB_OUTPUT"
+          docker build --tag "$image_tag" "$SERVICE_PATH"
+
+      - name: Trivy Image Scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: "${{ steps.image.outputs.uri }}"
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          trivyignores: ${{ matrix.service.path }}/.trivyignore

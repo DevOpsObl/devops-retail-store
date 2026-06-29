@@ -151,14 +151,19 @@ docker compose logs -f <servicio>
 | `ADMIN_PASSWORD`    | Contraseña administrador   | `admin`                   |
 | `ADMIN_JWT_SECRET`  | Secreto para tokens JWT    | `change-me-in-production` |
 
+En despliegues ECS, estas credenciales se inyectan desde AWS Secrets Manager. El workflow de deploy puede recibir la password desde el secret de GitHub Actions `ADMIN_PASSWORD`; si no se proporciona, Terraform genera una password aleatoria.
+
 ---
 
 ## Estructura del repositorio
 
 ```
-app/
+.
 ├── docker-compose.yml
 ├── init-db.sql
+├── infra/              # Terraform para bootstrap, registry y runtime
+├── docs/               # Documentación e informes del proyecto
+├── tests/              # Colecciones Postman y ambientes de prueba
 └── src/
     ├── catalog/        # Go - Catálogo de productos
     ├── cart/           # Python - Carrito de compras
