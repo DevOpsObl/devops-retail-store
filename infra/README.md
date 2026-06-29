@@ -8,7 +8,7 @@ Esta carpeta implementa la arquitectura definida en `docs/infrastructure.md`:
 - VPC con subredes publicas y privadas, Internet Gateway y NAT Gateway.
 - Amazon RDS PostgreSQL y Amazon ElastiCache Redis en subredes privadas.
 - AWS Secrets Manager para credenciales generadas por Terraform.
-- CloudWatch Logs y una Lambda de automatizacion.
+- CloudWatch Logs y una Lambda que actua como guardia de despliegues ECS.
 - Uso del rol IAM `LabRole` del laboratorio AWS.
 
 ## Bootstrap del estado remoto
@@ -133,6 +133,16 @@ Para ejecuciones manuales fuera de GitHub Actions se puede pasar el valor con un
 ```bash
 TF_VAR_admin_password='admin' make apply ENV=dev
 ```
+
+## Guardia de despliegue ECS
+
+Cada servicio ECS ejecuta la Lambda `deployment-validator` en `POST_SCALE_UP`. La funcion identifica la task definition de la revision objetivo, consulta solamente sus tasks `RUNNING` y prueba sus IP privadas. No usa el endpoint compartido del ALB, porque durante un deployment ese endpoint podria responder desde la revision anterior.
+
+Se realizan tres intentos separados por 30 segundos. Al agotarlos, la Lambda publica el detalle en SNS y devuelve `FAILED`; ECS revierte a la ultima revision exitosa.
+
+El rol de ejecucion `LabRole` necesita permisos para logs de Lambda, networking VPC, `ecs:DescribeServiceRevisions`, `ecs:ListTasks`, `ecs:DescribeTasks` y `sns:Publish`. El ambiente reutiliza `LabRole` como rol del hook y concede `lambda:InvokeFunction` exclusivamente sobre la funcion mediante su policy basada en recursos, evitando crear o modificar recursos IAM en el laboratorio.
+
+La suscripcion por email de SNS debe confirmarse desde el correo configurado en `alerta_email`. El codigo, contrato del evento y comandos de verificacion estan documentados en `infra/modules/lambda/README.md`.
 
 ## Nota sobre PostgreSQL
 

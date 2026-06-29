@@ -241,6 +241,31 @@ resource "aws_ecs_service" "service" {
   deployment_minimum_healthy_percent = 50
   deployment_maximum_percent         = 200
 
+  dynamic "deployment_configuration" {
+    for_each = var.deployment_hook.enabled ? [1] : []
+
+    content {
+      strategy = "ROLLING"
+
+      lifecycle_hook {
+        hook_target_arn = var.deployment_hook.function_arn
+        role_arn        = var.deployment_hook.role_arn
+        lifecycle_stages = [
+          "POST_SCALE_UP",
+        ]
+        hook_details = jsonencode({
+          port          = each.value.port
+          healthPath    = each.value.validation.health_path
+          expectedBody  = each.value.validation.expected_body
+          smokePaths    = each.value.validation.smoke_paths
+          maxAttempts   = var.deployment_hook.max_attempts
+          callbackDelay = var.deployment_hook.retry_delay_seconds
+          timeoutMs     = var.deployment_hook.request_timeout_ms
+        })
+      }
+    }
+  }
+
   network_configuration {
     subnets          = var.private_subnet_ids
     security_groups  = [var.security_group_id]

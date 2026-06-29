@@ -162,6 +162,11 @@ locals {
         RETAIL_UI_ENDPOINTS_ORDERS   = local.alb_url
       }
       secrets = {}
+      validation = {
+        health_path   = "/health"
+        expected_body = "OK"
+        smoke_paths   = []
+      }
     }
     # Admin se conecta directo a PostgreSQL y recibe credenciales desde Secrets Manager.
     admin = {
@@ -185,6 +190,11 @@ locals {
         ADMIN_PASSWORD   = "${local.secret_arn}:admin_password::"
         ADMIN_JWT_SECRET = "${local.secret_arn}:admin_jwt_secret::"
       }
+      validation = {
+        health_path   = "/health"
+        expected_body = "OK"
+        smoke_paths   = []
+      }
     }
     # Catalog usa PostgreSQL y expone endpoints bajo /catalog.
     catalog = {
@@ -204,6 +214,11 @@ locals {
       }
       secrets = {
         RETAIL_CATALOG_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
+      }
+      validation = {
+        health_path   = "/health"
+        expected_body = "OK"
+        smoke_paths   = ["/catalog/size", "/catalog/products?page=1&size=1"]
       }
     }
     # Cart usa PostgreSQL y expone endpoints bajo /carts.
@@ -226,6 +241,11 @@ locals {
       secrets = {
         CART_POSTGRES_PASSWORD = "${local.secret_arn}:db_password::"
       }
+      validation = {
+        health_path   = "/health"
+        expected_body = jsonencode({ status = "UP" })
+        smoke_paths   = ["/carts/deployment-validator", "/carts/deployment-validator/items"]
+      }
     }
     # Checkout usa Redis y llama a orders a traves del ALB comun.
     checkout = {
@@ -242,6 +262,11 @@ locals {
         RETAIL_CHECKOUT_ENDPOINTS_ORDERS      = local.alb_url
       }
       secrets = {}
+      validation = {
+        health_path   = "/health"
+        expected_body = jsonencode({ status = "ok" })
+        smoke_paths   = []
+      }
     }
     # Orders usa PostgreSQL y expone endpoints bajo /orders.
     orders = {
@@ -261,6 +286,11 @@ locals {
       secrets = {
         RETAIL_ORDERS_PERSISTENCE_PASSWORD = "${local.secret_arn}:db_password::"
       }
+      validation = {
+        health_path   = "/health"
+        expected_body = "OK"
+        smoke_paths   = []
+      }
     }
   }
 }
@@ -277,6 +307,14 @@ module "ecs" {
   log_group_names    = module.monitoring.log_group_names
   target_group_arns  = module.alb.target_group_arns
   services           = local.service_definitions
+  deployment_hook = {
+    enabled             = true
+    function_arn        = module.lambda.function_arn
+    role_arn            = module.lambda.ecs_hook_role_arn
+    max_attempts        = 3
+    retry_delay_seconds = 30
+    request_timeout_ms  = 3000
+  }
   database_init = {
     enabled                    = true
     host                       = local.db_host
@@ -288,7 +326,7 @@ module "ecs" {
   }
   tags = local.common_tags
 
-  depends_on = [module.secrets]
+  depends_on = [module.secrets, module.lambda]
 }
 
 # Crea una Lambda simple para automatizaciones operativas programadas.
@@ -297,8 +335,10 @@ module "lambda" {
 
   name_prefix        = local.name_prefix
   lab_role_arn       = data.aws_iam_role.lab_role.arn
+  ecs_hook_role_arn  = coalesce(var.ecs_hook_role_arn, data.aws_iam_role.lab_role.arn)
   subnet_ids         = module.networking.private_subnet_ids
   security_group_ids = [module.security.lambda_sg_id]
+  alert_email        = var.alerta_email
   tags               = local.common_tags
 }
 
