@@ -46,7 +46,40 @@ variable "services" {
     environment   = map(string)
     secrets       = map(string)
     public        = bool
+    validation = object({
+      health_path   = string
+      expected_body = optional(string)
+      smoke_paths   = list(string)
+    })
   }))
+}
+
+variable "deployment_hook" {
+  description = "Configuracion del guardia Lambda ejecutado por ECS en POST_SCALE_UP."
+  type = object({
+    enabled             = bool
+    function_arn        = string
+    role_arn            = string
+    max_attempts        = number
+    retry_delay_seconds = number
+    request_timeout_ms  = number
+  })
+  default = {
+    enabled             = false
+    function_arn        = ""
+    role_arn            = ""
+    max_attempts        = 3
+    retry_delay_seconds = 30
+    request_timeout_ms  = 3000
+  }
+
+  validation {
+    condition = (
+      !var.deployment_hook.enabled ||
+      (var.deployment_hook.function_arn != "" && var.deployment_hook.role_arn != "")
+    )
+    error_message = "function_arn y role_arn son obligatorios cuando deployment_hook.enabled es true."
+  }
 }
 
 variable "database_init" {

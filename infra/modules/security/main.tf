@@ -55,6 +55,14 @@ resource "aws_security_group" "ecs" {
     self        = true
   }
 
+  ingress {
+    description     = "Health y smoke checks desde Lambda"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.lambda.id]
+  }
+
   egress {
     description = "Salida general de las tareas"
     from_port   = 0

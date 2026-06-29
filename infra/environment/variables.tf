@@ -143,5 +143,18 @@ variable "tags" {
 variable "alerta_email" {
   description = "Email para las alertas de CloudWatch"
   type        = string
-  default     = "FC319295@fi365.ort.edu.uy"
+  # default     = "FC319295@fi365.ort.edu.uy"
+  default = "darriola.dev@gmail.com"
+}
+
+variable "ecs_hook_role_arn" {
+  description = "Rol IAM existente con trust para ecs.amazonaws.com. Si es null, se reutiliza LabRole y Lambda le concede invocacion sobre la funcion validadora."
+  type        = string
+  default     = null
+  nullable    = true
+
+  validation {
+    condition     = var.ecs_hook_role_arn == null || trimspace(var.ecs_hook_role_arn) != ""
+    error_message = "ecs_hook_role_arn debe ser null o un ARN no vacio."
+  }
 }
