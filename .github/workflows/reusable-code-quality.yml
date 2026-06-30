@@ -86,7 +86,7 @@ jobs:
             SCOPE_ARGS+=(--data-urlencode "pullRequest=${PR_NUMBER}")
           else
             SONAR_DASHBOARD_URL="${SONAR_DASHBOARD_URL}&branch=${GITHUB_REF_NAME}"
-            SCOPE_ARGS+=(--data-urlencode "branch=${GITHUB_REF_NAME}")
+            SCOPE_ARGS+=(--data-urlencode "branch=${GITHUB_REF_NAME}") # gitleaks:allow
             NEW_CODE_ARGS+=(--data-urlencode "inNewCodePeriod=true")
           fi
 
