@@ -23,3 +23,12 @@ CVE-2026-9538
 # CVE-2023-45853 - zlib
 # Debian 12.14
 CVE-2023-45853
+
+# Errores de ÚLTIMO momento
+# CVE-2026-54369 - libacl1
+# Debian 12.14
+CVE-2026-54369
+
+# CVE-2026-54371 - libattr1
+# Debian 12.14
+CVE-2026-54371
