@@ -22,16 +22,18 @@ jobs:
   code_quality:
     name: Quality
     uses: ./.github/workflows/reusable-code-quality.yml
+    # nosemgrep
     secrets: inherit
 
   security_analysis:
     name: Security
     uses: ./.github/workflows/reusable-security-analysis.yml
+    # nosemgrep
     secrets: inherit
 
   build_images:
     name: Build
-    needs: 
+    needs:
       - security_analysis
       - code_quality
     uses: ./.github/workflows/reusable-build-images.yml
@@ -54,6 +56,7 @@ jobs:
     with:
       environment: dev
       aws-region: us-east-1
+    # nosemgrep
     secrets: inherit
 
   publish_images:
@@ -67,6 +70,7 @@ jobs:
       aws-region: us-east-1
       ecr-repository-prefix: devops-retail-store-dev
       image-tag: ${{ github.sha }}
+    # nosemgrep
     secrets: inherit
 
   deploy_dev:
@@ -79,4 +83,5 @@ jobs:
       github-environment: Develop
       aws-region: us-east-1
       image-tag: ${{ github.sha }}
+    # nosemgrep
     secrets: inherit

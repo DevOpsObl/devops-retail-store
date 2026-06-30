@@ -1,8 +1,11 @@
 locals {
   name_prefix         = "${var.project_name}-${var.environment}"
-  log_group_name_list = [for service in sort(tolist(var.services)) : var.log_group_names[service]]
+  log_group_name_list = [for k, _ in var.services : "/ecs/${local.name_prefix}/${k}"]
 
-  logs_query = "fields @timestamp, @logStream, @message | sort @timestamp desc | limit 200"
+  logs_query = join(" ", concat(
+    [for k, _ in var.services : "SOURCE \"/ecs/${local.name_prefix}/${k}\" |"],
+    ["fields @timestamp, @logStream, @message | filter @message like /(?i)error/ | sort @timestamp desc | limit 200"]
+  ))
   alb_health_metrics = [
     for name, tg_arn_suffix in var.target_group_arn_suffixes : [
       "AWS/ApplicationELB", "HealthyHostCount",
@@ -23,7 +26,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         properties = {
           title   = "CPU Utilization - ECS"
           region  = var.aws_region
-          metrics = [["AWS/ECS", "CPUUtilization", "ClusterName", var.cluster_name]]
+          metrics = [["ECS/ContainerInsights", "CpuUtilized", "ClusterName", var.cluster_name]]
           period  = 300
           stat    = "Average"
           view    = "timeSeries"
@@ -35,7 +38,7 @@ resource "aws_cloudwatch_dashboard" "main" {
         properties = {
           title   = "Memory Utilization - ECS"
           region  = var.aws_region
-          metrics = [["AWS/ECS", "MemoryUtilization", "ClusterName", var.cluster_name]]
+          metrics = [["ECS/ContainerInsights", "MemoryUtilized", "ClusterName", var.cluster_name]]
           period  = 300
           stat    = "Average"
           view    = "timeSeries"
@@ -146,12 +149,12 @@ resource "aws_cloudwatch_log_metric_filter" "errores_app" {
   name           = "errores-${each.key}"
   log_group_name = var.log_group_names[each.key]
   pattern = lookup({
-    "catalog"  = "?error ?ERROR"
-    "orders"   = "?error ?ERROR"
-    "checkout" = "?error ?ERROR"
-    "cart"     = "?error ?ERROR"
-    "ui"       = "?error ?ERROR"
-    "admin"    = "?error ?ERROR"
+    "catalog"  = "?error ?ERROR ?Error"
+    "orders"   = "?error ?ERROR ?Error"
+    "checkout" = "?error ?ERROR ?Error"
+    "cart"     = "?error ?ERROR ?Error"
+    "ui"       = "?error ?ERROR ?Error"
+    "admin"    = "?error ?ERROR ?Error"
   }, each.key, "ERROR")
 
   metric_transformation {
